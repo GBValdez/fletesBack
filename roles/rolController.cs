@@ -20,7 +20,7 @@ namespace project.roles
     {
         private RoleManager<rolEntity> rolManager;
         private UserManager<userEntity> userManager;
-        public rolController(RoleManager<rolEntity> rolManager, AvionesContext contex, IMapper mapper, UserManager<userEntity> userManager) : base(contex, mapper)
+        public rolController(RoleManager<rolEntity> rolManager, DBProyContext contex, IMapper mapper, UserManager<userEntity> userManager) : base(contex, mapper)
         {
             this.rolManager = rolManager;
             this.userManager = userManager;

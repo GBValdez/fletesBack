@@ -6,15 +6,16 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using project.utils.catalogue;
 using project.utils.catalogues.dto;
 using project.utils.dto;
 
 namespace project.utils.catalogues
 {
-    public class cataloguesController : controllerCommons<Catalogo, catalogueCreationDto, catalogueDto, catalogueQueryDto, object, long>
+    public class cataloguesController : controllerCommons<Catalogue, catalogueCreationDto, catalogueDto, catalogueQueryDto, object, long>
     {
         protected string codCatalogue { get; set; }
-        public cataloguesController(AvionesContext context, IMapper mapper) : base(context, mapper)
+        public cataloguesController(DBProyContext context, IMapper mapper) : base(context, mapper)
         {
         }
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR,ADMINISTRATOR_AIRLINE")]
@@ -23,20 +24,20 @@ namespace project.utils.catalogues
         {
             return base.get(data, queryParams);
         }
-        protected override async Task modifyPost(Catalogo entity, object queryParams)
+        protected override async Task modifyPost(Catalogue entity, object queryParams)
         {
-            entity.CatalogoTipoId = (await getCatalogueType()).Id;
+            entity.catalogueTypeId = (await getCatalogueType()).Id;
         }
 
-        protected Task<CatalogoTipo> getCatalogueType()
+        protected Task<catalogueType> getCatalogueType()
         {
-            return context.CatalogoTipos.Where(db => db.code == codCatalogue).FirstOrDefaultAsync();
+            return context.catalogueTypes.Where(db => db.code == codCatalogue).FirstOrDefaultAsync();
         }
 
-        protected override async Task<IQueryable<Catalogo>> modifyGet(IQueryable<Catalogo> query, catalogueQueryDto queryParams)
+        protected override async Task<IQueryable<Catalogue>> modifyGet(IQueryable<Catalogue> query, catalogueQueryDto queryParams)
         {
-            CatalogoTipo catalogueType = await getCatalogueType();
-            return query.Where(db => db.CatalogoTipoId == catalogueType.Id);
+            catalogueType catalogueType = await getCatalogueType();
+            return query.Where(db => db.catalogueTypeId == catalogueType.Id);
         }
     }
 }

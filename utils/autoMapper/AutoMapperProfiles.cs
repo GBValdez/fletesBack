@@ -1,9 +1,10 @@
 using AutoMapper;
+using AvionesBackNet.Models;
 using project.roles;
 using project.roles.dto;
 using project.users;
 using project.users.dto;
-using project.utils.catalogues.dto;
+using project.users.Models;
 
 namespace project.utils.autoMapper
 {
@@ -17,7 +18,9 @@ namespace project.utils.autoMapper
 
             CreateMap<rolEntity, rolDto>();
             CreateMap<rolCreationDto, rolEntity>();
-
+            CreateMap<Client, clientDto>();
+            CreateMap<clientCreationDto, Client>();
+            CreateMap<clientCreationDto, userCreationDto>();
             // CreateMap<Catalogo, catalogueDto>();
             // CreateMap<catalogueCreationDto, Catalogo>();
 

@@ -6,8 +6,8 @@ namespace project.users.dto
     {
         [Required]
         [EmailAddress]
-        public string email { get; set; }
+        public string email { get; set; } = null!;
         [Required]
-        public string password { get; set; }
+        public string password { get; set; } = null!;
     }
 }

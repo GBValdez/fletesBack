@@ -22,11 +22,11 @@ namespace project.utils
     where TDtoCreation : class
     where TQuery : class
     {
-        protected readonly AvionesContext context;
+        protected readonly DBProyContext context;
         protected readonly IMapper mapper;
         // protected readonly ILogger<AuthorsController> logger;
         protected virtual Boolean showDeleted { get; set; } = false;
-        public controllerCommons(AvionesContext context, IMapper mapper)
+        public controllerCommons(DBProyContext context, IMapper mapper)
         {
             this.context = context;
             this.mapper = mapper;

@@ -3,7 +3,6 @@ using System.Security.Claims;
 using System.Text;
 using AutoMapper;
 using AvionesBackNet.Models;
-using AvionesBackNet.Modules.Vuelos.dto;
 using AvionesBackNet.users;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -35,7 +34,7 @@ namespace project.users
         private readonly IDataProtector dataProtector;
         protected override bool showDeleted { get; set; } = true;
         protected readonly userSvc userSvc;
-        public userController(UserManager<userEntity> userManager, IConfiguration configuration, SignInManager<userEntity> signManager, emailService emailService, IDataProtectionProvider dataProvider, AvionesContext contex, IMapper mapper, userSvc userSvc) : base(contex, mapper)
+        public userController(UserManager<userEntity> userManager, IConfiguration configuration, SignInManager<userEntity> signManager, emailService emailService, IDataProtectionProvider dataProvider, DBProyContext contex, IMapper mapper, userSvc userSvc) : base(contex, mapper)
         {
             this.userSvc = userSvc;
             this.userManager = userManager;
@@ -110,23 +109,17 @@ namespace project.users
 
         [HttpPost("register")]
         [AllowAnonymous]
-        public async Task<IActionResult> register(clienteCreationDto newCliente)
+        public async Task<IActionResult> register(clientCreationDto newCliente)
         {
-            if (await context.Clientes.AnyAsync(c => c.NoPasaporte == newCliente.NoPasaporte))
-                return BadRequest(new errorMessageDto("Ya existe un cliente con ese pasaporte"));
-            userCreationDto credentials = new userCreationDto
-            {
-                email = newCliente.Correo,
-                password = newCliente.password,
-                userName = newCliente.userName
-            };
+
+            userCreationDto credentials = mapper.Map<userCreationDto>(newCliente);
             errorMessageDto error = await userSvc.register(credentials, new List<string> { "userNormal" });
             if (error != null)
                 return BadRequest(error);
-            userEntity newUser = await userManager.FindByEmailAsync(newCliente.Correo);
-            Cliente cliente = mapper.Map<Cliente>(newCliente);
+            userEntity newUser = await userManager.FindByEmailAsync(newCliente.email);
+            Client cliente = mapper.Map<Client>(newCliente);
             cliente.UserId = newUser.Id;
-            context.Clientes.Add(cliente);
+            context.Clients.Add(cliente);
             await context.SaveChangesAsync();
             return NoContent();
         }
@@ -260,16 +253,16 @@ namespace project.users
             }
             claimUser.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
             claimUser.Add(new Claim(ClaimTypes.Name, user.UserName)); // Agrega el nombre de usuario como un claim
-            Cliente cliente = await context.Clientes.Where(c => c.UserId == user.Id && c.deleteAt == null).FirstOrDefaultAsync();
+            Client cliente = await context.Clients.Where(c => c.UserId == user.Id && c.deleteAt == null).FirstOrDefaultAsync();
             if (cliente != null)
             {
                 claimUser.Add(new Claim("clienteId", cliente.Id.ToString()));
             }
-            Empleado empleado = await context.Empleados.Where(e => e.UserId == user.Id && e.deleteAt == null).FirstOrDefaultAsync();
-            if (empleado != null)
-            {
-                claimUser.Add(new Claim("empleadoId", empleado.Id.ToString()));
-            }
+            // Empleado empleado = await context.Empleados.Where(e => e.UserId == user.Id && e.deleteAt == null).FirstOrDefaultAsync();
+            // if (empleado != null)
+            // {
+            //     claimUser.Add(new Claim("empleadoId", empleado.Id.ToString()));
+            // }
 
             // Estos son los parametros que guardara el webToken
             List<Claim> claims = new List<Claim>(){
