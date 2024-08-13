@@ -1,10 +1,13 @@
 using AutoMapper;
 using AvionesBackNet.Models;
+using fletesProyect.utils.Catalogues.dto;
 using project.roles;
 using project.roles.dto;
 using project.users;
 using project.users.dto;
 using project.users.Models;
+using project.utils.catalogue;
+using project.utils.catalogues.dto;
 
 namespace project.utils.autoMapper
 {
@@ -21,8 +24,10 @@ namespace project.utils.autoMapper
             CreateMap<Client, clientDto>();
             CreateMap<clientCreationDto, Client>();
             CreateMap<clientCreationDto, userCreationDto>();
-            // CreateMap<Catalogo, catalogueDto>();
-            // CreateMap<catalogueCreationDto, Catalogo>();
+            CreateMap<Catalogue, catalogueDto>();
+            CreateMap<catalogueCreationDto, Catalogue>();
+            CreateMap<catalogueTypeDtoCreation, catalogueType>();
+            CreateMap<catalogueType, catalogueTypeDtoCreation>();
 
         }
 

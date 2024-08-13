@@ -11,6 +11,7 @@ namespace fletesProyect.models
         public DateTime estimatedDate { get; set; }
         public DateTime realDate { get; set; }
         public DateTime arrivalDate { get; set; }
+        public int quantity { get; set; }
         public long stationId { get; set; }
         public Station station { get; set; } = null!;
         public long ordenDetailId { get; set; }

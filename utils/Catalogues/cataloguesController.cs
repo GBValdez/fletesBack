@@ -37,7 +37,7 @@ namespace project.utils.catalogues
         protected override async Task<IQueryable<Catalogue>> modifyGet(IQueryable<Catalogue> query, catalogueQueryDto queryParams)
         {
             catalogueType catalogueType = await getCatalogueType();
-            return query.Where(db => db.catalogueTypeId == catalogueType.Id);
+            return query.Where(db => db.catalogueTypeId == catalogueType.Id).Include(db => db.catalogueParent);
         }
     }
 }

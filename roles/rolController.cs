@@ -26,7 +26,7 @@ namespace project.roles
             this.userManager = userManager;
         }
 
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
+        // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
 
         public override Task<ActionResult<resPag<rolDto>>> get([FromQuery] pagQueryDto data, [FromQuery] rolQueryDto queryParams)
         {

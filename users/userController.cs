@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using project.users.dto;
+using project.users.Models;
 using project.utils;
 using project.utils.dto;
 using project.utils.services;
@@ -118,7 +119,7 @@ namespace project.users
                 return BadRequest(error);
             userEntity newUser = await userManager.FindByEmailAsync(newCliente.email);
             Client cliente = mapper.Map<Client>(newCliente);
-            cliente.UserId = newUser.Id;
+            cliente.userId = newUser.Id;
             context.Clients.Add(cliente);
             await context.SaveChangesAsync();
             return NoContent();
@@ -253,7 +254,7 @@ namespace project.users
             }
             claimUser.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
             claimUser.Add(new Claim(ClaimTypes.Name, user.UserName)); // Agrega el nombre de usuario como un claim
-            Client cliente = await context.Clients.Where(c => c.UserId == user.Id && c.deleteAt == null).FirstOrDefaultAsync();
+            Client cliente = await context.Clients.Where(c => c.userId == user.Id && c.deleteAt == null).FirstOrDefaultAsync();
             if (cliente != null)
             {
                 claimUser.Add(new Claim("clienteId", cliente.Id.ToString()));
