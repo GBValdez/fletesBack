@@ -1,5 +1,9 @@
 using AutoMapper;
 using AvionesBackNet.Models;
+using fletesProyect.models;
+using fletesProyect.products;
+using fletesProyect.providersModule.dto;
+using fletesProyect.station;
 using fletesProyect.utils.Catalogues.dto;
 using project.roles;
 using project.roles.dto;
@@ -28,6 +32,12 @@ namespace project.utils.autoMapper
             CreateMap<catalogueCreationDto, Catalogue>();
             CreateMap<catalogueTypeDtoCreation, catalogueType>();
             CreateMap<catalogueType, catalogueTypeDtoCreation>();
+            CreateMap<Provider, providerDto>();
+            CreateMap<providerDtoBase, Provider>();
+            CreateMap<Station, stationDto>();
+            CreateMap<stationDtoCreation, Station>();
+            CreateMap<product, productDto>();
+            CreateMap<productDtoCreation, product>();
 
         }
 
