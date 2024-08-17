@@ -20,7 +20,7 @@ namespace fletesProyect.models
         public TimeSpan openingTime { get; set; }
         public TimeSpan closingTime { get; set; }
         public int stopLimit { get; set; }
-        public long userId { get; set; }
+        public string userId { get; set; }
         public userEntity user { get; set; } = null!;
         public float maximumWeight { get; set; }
         public long brandId { get; set; }

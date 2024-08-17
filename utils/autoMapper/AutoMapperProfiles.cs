@@ -1,5 +1,6 @@
 using AutoMapper;
 using AvionesBackNet.Models;
+using fletesProyect.driver.dto;
 using fletesProyect.models;
 using fletesProyect.products;
 using fletesProyect.providersModule.dto;
@@ -38,6 +39,9 @@ namespace project.utils.autoMapper
             CreateMap<stationDtoCreation, Station>();
             CreateMap<product, productDto>();
             CreateMap<productDtoCreation, product>();
+
+            CreateMap<Driver, driverDto>();
+            CreateMap<driveDtoCreation, Driver>();
 
         }
 
