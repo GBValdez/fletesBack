@@ -13,5 +13,6 @@ namespace fletesProyect.models
         public Catalogue typeVehicle { get; set; } = null!;
         public long productId { get; set; }
         public product product { get; set; } = null!;
+        public long quantity { get; set; }
     }
 }
