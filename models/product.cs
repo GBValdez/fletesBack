@@ -12,5 +12,6 @@ namespace fletesProyect.models
         public long categoryId { get; set; }
         public Catalogue category { get; set; } = null!;
         public float weight { get; set; }
+        public string imgUrl { get; set; } = null!;
     }
 }

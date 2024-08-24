@@ -3,6 +3,7 @@ using System;
 using AvionesBackNet.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace fletesProyect.Migrations
 {
     [DbContext(typeof(DBProyContext))]
-    partial class DBProyContextModelSnapshot : ModelSnapshot
+    [Migration("20240823214543_imgUrlProduct")]
+    partial class imgUrlProduct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
