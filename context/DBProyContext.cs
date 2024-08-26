@@ -25,6 +25,7 @@ public partial class DBProyContext : IdentityDbContext<userEntity, rolEntity, st
     public DbSet<product> Products { get; set; }
     public DbSet<productProvider> productProviders { get; set; }
     public DbSet<vehicleProduct> VehicleProducts { get; set; }
+    public DbSet<stationProduct> stationProducts { get; set; }
     public DbSet<Provider> providers { get; set; }
     public DbSet<Station> stations { get; set; }
     public DbSet<Visit> visits { get; set; }

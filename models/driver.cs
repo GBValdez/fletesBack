@@ -27,5 +27,7 @@ namespace fletesProyect.models
         public Catalogue brand { get; set; } = null!;
         public long modelId { get; set; }
         public Catalogue model { get; set; } = null!;
+        public long gasolineTypeId { get; set; }
+        public Catalogue gasolineType { get; set; } = null!;
     }
 }

@@ -3,6 +3,7 @@ using System;
 using AvionesBackNet.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace fletesProyect.Migrations
 {
     [DbContext(typeof(DBProyContext))]
-    partial class DBProyContextModelSnapshot : ModelSnapshot
+    [Migration("20240826021149_stockProductStation")]
+    partial class stockProductStation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -245,9 +248,6 @@ namespace fletesProyect.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<long>("gasolineTypeId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("licensePlate")
                         .IsRequired()
                         .HasColumnType("text");
@@ -290,8 +290,6 @@ namespace fletesProyect.Migrations
 
                     b.HasIndex("brandId");
 
-                    b.HasIndex("gasolineTypeId");
-
                     b.HasIndex("modelId");
 
                     b.HasIndex("userId");
@@ -330,10 +328,6 @@ namespace fletesProyect.Migrations
 
                     b.Property<DateTime>("orderDate")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("originCoord")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<DateTime?>("updateAt")
                         .HasColumnType("timestamp with time zone");
@@ -1058,12 +1052,6 @@ namespace fletesProyect.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("project.utils.catalogue.Catalogue", "gasolineType")
-                        .WithMany()
-                        .HasForeignKey("gasolineTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("project.utils.catalogue.Catalogue", "model")
                         .WithMany()
                         .HasForeignKey("modelId")
@@ -1081,8 +1069,6 @@ namespace fletesProyect.Migrations
                         .HasForeignKey("userUpdateId");
 
                     b.Navigation("brand");
-
-                    b.Navigation("gasolineType");
 
                     b.Navigation("model");
 

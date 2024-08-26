@@ -11,6 +11,7 @@ namespace fletesProyect.models
     public class Orden : CommonsModel<long>
     {
         public string deliveryCoord { get; set; } = null!;
+        public string originCoord { get; set; } = null!;
         public DateTime deliveryDate { get; set; }
         public DateTime orderDate { get; set; }
         public long clientId { get; set; }
