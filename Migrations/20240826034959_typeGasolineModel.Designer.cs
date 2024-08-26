@@ -3,6 +3,7 @@ using System;
 using AvionesBackNet.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace fletesProyect.Migrations
 {
     [DbContext(typeof(DBProyContext))]
-    partial class DBProyContextModelSnapshot : ModelSnapshot
+    [Migration("20240826034959_typeGasolineModel")]
+    partial class typeGasolineModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -494,46 +497,6 @@ namespace fletesProyect.Migrations
                     b.HasIndex("userUpdateId");
 
                     b.ToTable("visits");
-                });
-
-            modelBuilder.Entity("fletesProyect.models.modelGasoline", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime?>("createAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("deleteAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<float>("gasolineLtsKm")
-                        .HasColumnType("real");
-
-                    b.Property<long>("gasolineTypeId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("modelId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("updateAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("userUpdateId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("gasolineTypeId");
-
-                    b.HasIndex("modelId");
-
-                    b.HasIndex("userUpdateId");
-
-                    b.ToTable("modelGasolines");
                 });
 
             modelBuilder.Entity("fletesProyect.models.ordenDetail", b =>
@@ -1190,31 +1153,6 @@ namespace fletesProyect.Migrations
                     b.Navigation("ordenDetail");
 
                     b.Navigation("station");
-
-                    b.Navigation("userUpdate");
-                });
-
-            modelBuilder.Entity("fletesProyect.models.modelGasoline", b =>
-                {
-                    b.HasOne("project.utils.catalogue.Catalogue", "gasolineType")
-                        .WithMany()
-                        .HasForeignKey("gasolineTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("project.utils.catalogue.Catalogue", "model")
-                        .WithMany()
-                        .HasForeignKey("modelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("project.users.userEntity", "userUpdate")
-                        .WithMany()
-                        .HasForeignKey("userUpdateId");
-
-                    b.Navigation("gasolineType");
-
-                    b.Navigation("model");
 
                     b.Navigation("userUpdate");
                 });
