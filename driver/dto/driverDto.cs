@@ -13,7 +13,6 @@ namespace fletesProyect.driver.dto
     {
         public long Id { get; set; }
         public userDto user { get; set; } = null!;
-        public catalogueDto brand { get; set; } = null!;
         public catalogueDto model { get; set; } = null!;
 
     }

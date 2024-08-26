@@ -41,6 +41,8 @@ namespace project.utils.catalogues
                 query = query.Where(db => db.name.Contains(queryParams.name));
             if (queryParams.catalogueParentId != null)
                 query = query.Where(db => db.catalogueParentId == queryParams.catalogueParentId);
+            if (queryParams.id != null)
+                query = query.Where(db => db.Id == queryParams.id);
 
             return query.Where(db => db.catalogueTypeId == catalogueType.Id).Include(db => db.catalogueParent);
         }

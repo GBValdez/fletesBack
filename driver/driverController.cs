@@ -30,7 +30,7 @@ namespace fletesProyect.driver
         }
         protected override Task<IQueryable<Driver>> modifyGet(IQueryable<Driver> query, object queryParams)
         {
-            query = query.Include(x => x.brand).Include(x => x.model).Include(x => x.user);
+            query = query.Include(x => x.model).Include(x => x.user);
             return base.modifyGet(query, queryParams);
         }
 

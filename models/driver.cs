@@ -23,8 +23,6 @@ namespace fletesProyect.models
         public string userId { get; set; }
         public userEntity user { get; set; } = null!;
         public float maximumWeight { get; set; }
-        public long brandId { get; set; }
-        public Catalogue brand { get; set; } = null!;
         public long modelId { get; set; }
         public Catalogue model { get; set; } = null!;
 

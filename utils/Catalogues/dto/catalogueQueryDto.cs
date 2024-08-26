@@ -7,6 +7,7 @@ namespace AvionesBackNet.utils.Catalogues
 {
     public class catalogueQueryDto
     {
+        public long? id { get; set; }
         public string? name { get; set; }
         public long? catalogueParentId { get; set; }
 
