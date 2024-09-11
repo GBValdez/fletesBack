@@ -16,6 +16,7 @@ namespace fletesProyect.models
         public long typeVehicleId { get; set; }
         public Catalogue typeVehicle { get; set; } = null!;
         public float gasolineLtsKm { get; set; }
+        public float maximumWeight { get; set; }
 
     }
 }

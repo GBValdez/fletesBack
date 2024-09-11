@@ -43,16 +43,26 @@ namespace fletesProyect.orders
             //Buscamos a los vehiculos que tenga compatibilidad con los productos de la orden
             List<long> productIds = newRegister.orderDetails.Select(od => od.productId).ToList();
 
+            Dictionary<long, int> productQuantitiesRequired = newRegister.orderDetails.ToDictionary(od => od.productId, od => od.quantity);
+
             IQueryable<long> query = context.VehicleProducts
-                .Where(vp => productIds.Contains(vp.productId))
-                .GroupBy(vp => vp.typeVehicleId)
-                .Where(g => g.Select(vp => vp.productId).Distinct().Count() == productIds.Count)
-                .Select(g => g.Key);
+                .Where(vp => productIds.Contains(vp.productId)) // Filtrar solo los productos relevantes
+                .GroupBy(vp => vp.typeVehicleId) // Agrupar por tipo de vehículo
+                .Where(g => g
+                    .All(vp => vp.quantity >= productQuantitiesRequired[vp.productId]) // Verificar que puede cargar la cantidad requerida de cada producto
+                     && g.Select(vp => vp.productId).Distinct().Count() == productIds.Count // Asegurarse de que cubre todos los productos
+                )
+                .Select(g => g.Key); // Seleccionar el ID del tipo de vehículo compatible
 
             List<long> idTypeVehicle = await query.ToListAsync();
 
+            List<product> products = await context.Products
+                .Where(p => productIds.Contains(p.Id)).ToListAsync();
+
+            double TOTAL_WEIGHT = products.Sum(p => p.weight);
+
             List<long> modelGasolines = await context.modelGasolines
-                .Where(mg => idTypeVehicle.Contains(mg.typeVehicleId)).Select(mg => mg.modelId).Distinct().ToListAsync();
+                .Where(mg => idTypeVehicle.Contains(mg.typeVehicleId) && mg.maximumWeight > TOTAL_WEIGHT).Select(mg => mg.modelId).Distinct().ToListAsync();
             TimeSpan time = DateTime.Now.TimeOfDay;
 
 
@@ -97,6 +107,28 @@ namespace fletesProyect.orders
                 List<routeStation> route = routeStations.Where(rs => rs.stationAId == current.Id && idStations.Contains(rs.stationBId)).ToList();
                 List<stationProduct> stationProductMe = stationProducts.Where(sp => sp.stationId == current.Id).ToList();
                 routers.Add(new routerDto(current.Id, route, stationProductMe));
+            }
+
+            double minCost = 99999999;
+            Func<foundOrderDto, routerDto, routerDto, foundOrderDto> found = (foundOrderDto before, routerDto beforeRoute, routerDto currentRouter) =>
+            {
+                foundOrderDto myFound = mapper.Map<foundOrderDto>(before);
+                double distance = beforeRoute.routeStations.Where(rs => rs.stationBId == currentRouter.idStation).Select(rs => rs.distance).FirstOrDefault();
+                // myFound.costTotal += distance*before.driver.;
+                // if (minCost < myFound.distanceTotal)
+                // return null;
+
+                myFound.routes.Add(currentRouter.idStation);
+                return myFound;
+            };
+
+            foreach (Driver current in driversAvailable)
+            {
+                string cord = _driversHub.GetDriverPosition(current.Id);
+                if (cord != null)
+                {
+
+                }
             }
 
 

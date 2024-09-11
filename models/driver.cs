@@ -22,7 +22,6 @@ namespace fletesProyect.models
         public int stopLimit { get; set; }
         public string userId { get; set; }
         public userEntity user { get; set; } = null!;
-        public float maximumWeight { get; set; }
         public long modelId { get; set; }
         public Catalogue model { get; set; } = null!;
         public long countryOptId { get; set; } = 25;

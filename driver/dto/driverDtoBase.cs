@@ -16,7 +16,6 @@ namespace fletesProyect.driver.dto
         public TimeSpan openingTime { get; set; }
         public TimeSpan closingTime { get; set; }
         public int stopLimit { get; set; }
-        public float maximumWeight { get; set; }
 
 
     }
