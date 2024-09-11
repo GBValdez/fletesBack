@@ -9,6 +9,7 @@ namespace fletesProyect.driver.modelGasolineModule.dto
     {
         public long gasolineTypeId { get; set; }
         public long modelId { get; set; }
+        public long typeVehicleId { get; set; }
 
     }
 }

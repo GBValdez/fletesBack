@@ -53,7 +53,7 @@ namespace fletesProyect.driver.modelGasolineModule
         protected override Task<IQueryable<modelGasoline>> modifyGet(IQueryable<modelGasoline> query, idDto queryParams)
         {
             query = query.Where(x => x.modelId == queryParams.Id)
-                .Include(x => x.gasolineType);
+                .Include(x => x.gasolineType).Include(x => x.typeVehicle);
             return base.modifyGet(query, queryParams);
         }
     }

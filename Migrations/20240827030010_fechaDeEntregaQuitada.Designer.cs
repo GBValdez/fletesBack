@@ -3,6 +3,7 @@ using System;
 using AvionesBackNet.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace fletesProyect.Migrations
 {
     [DbContext(typeof(DBProyContext))]
-    partial class DBProyContextModelSnapshot : ModelSnapshot
+    [Migration("20240827030010_fechaDeEntregaQuitada")]
+    partial class fechaDeEntregaQuitada
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -232,9 +235,6 @@ namespace fletesProyect.Migrations
                     b.Property<TimeSpan>("closingTime")
                         .HasColumnType("interval");
 
-                    b.Property<long>("countryOptId")
-                        .HasColumnType("bigint");
-
                     b.Property<DateTime?>("createAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -284,8 +284,6 @@ namespace fletesProyect.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("countryOptId");
 
                     b.HasIndex("modelId");
 
@@ -409,9 +407,6 @@ namespace fletesProyect.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<long>("countryId")
-                        .HasColumnType("bigint");
-
                     b.Property<DateTime?>("createAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -439,8 +434,6 @@ namespace fletesProyect.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("countryId");
 
                     b.HasIndex("providerId");
 
@@ -521,9 +514,6 @@ namespace fletesProyect.Migrations
                     b.Property<long>("modelId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("typeVehicleId")
-                        .HasColumnType("bigint");
-
                     b.Property<DateTime?>("updateAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -535,8 +525,6 @@ namespace fletesProyect.Migrations
                     b.HasIndex("gasolineTypeId");
 
                     b.HasIndex("modelId");
-
-                    b.HasIndex("typeVehicleId");
 
                     b.HasIndex("userUpdateId");
 
@@ -673,46 +661,6 @@ namespace fletesProyect.Migrations
                     b.HasIndex("userUpdateId");
 
                     b.ToTable("productProviders");
-                });
-
-            modelBuilder.Entity("fletesProyect.models.routeStation", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime?>("createAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("deleteAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<double>("distance")
-                        .HasColumnType("double precision");
-
-                    b.Property<long>("stationAId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("stationBId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("updateAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("userUpdateId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("stationAId");
-
-                    b.HasIndex("stationBId");
-
-                    b.HasIndex("userUpdateId");
-
-                    b.ToTable("routeStations");
                 });
 
             modelBuilder.Entity("fletesProyect.models.stationProduct", b =>
@@ -1134,12 +1082,6 @@ namespace fletesProyect.Migrations
 
             modelBuilder.Entity("fletesProyect.models.Driver", b =>
                 {
-                    b.HasOne("project.utils.catalogue.Catalogue", "countryOpt")
-                        .WithMany()
-                        .HasForeignKey("countryOptId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("project.utils.catalogue.Catalogue", "model")
                         .WithMany()
                         .HasForeignKey("modelId")
@@ -1155,8 +1097,6 @@ namespace fletesProyect.Migrations
                     b.HasOne("project.users.userEntity", "userUpdate")
                         .WithMany()
                         .HasForeignKey("userUpdateId");
-
-                    b.Navigation("countryOpt");
 
                     b.Navigation("model");
 
@@ -1201,12 +1141,6 @@ namespace fletesProyect.Migrations
 
             modelBuilder.Entity("fletesProyect.models.Station", b =>
                 {
-                    b.HasOne("project.utils.catalogue.Catalogue", "country")
-                        .WithMany()
-                        .HasForeignKey("countryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("fletesProyect.models.Provider", "provider")
                         .WithMany()
                         .HasForeignKey("providerId")
@@ -1216,8 +1150,6 @@ namespace fletesProyect.Migrations
                     b.HasOne("project.users.userEntity", "userUpdate")
                         .WithMany()
                         .HasForeignKey("userUpdateId");
-
-                    b.Navigation("country");
 
                     b.Navigation("provider");
 
@@ -1263,12 +1195,6 @@ namespace fletesProyect.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("project.utils.catalogue.Catalogue", "typeVehicle")
-                        .WithMany()
-                        .HasForeignKey("typeVehicleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("project.users.userEntity", "userUpdate")
                         .WithMany()
                         .HasForeignKey("userUpdateId");
@@ -1277,15 +1203,13 @@ namespace fletesProyect.Migrations
 
                     b.Navigation("model");
 
-                    b.Navigation("typeVehicle");
-
                     b.Navigation("userUpdate");
                 });
 
             modelBuilder.Entity("fletesProyect.models.ordenDetail", b =>
                 {
                     b.HasOne("fletesProyect.models.Orden", "order")
-                        .WithMany("orderDetails")
+                        .WithMany()
                         .HasForeignKey("orderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1353,31 +1277,6 @@ namespace fletesProyect.Migrations
                     b.Navigation("product");
 
                     b.Navigation("provider");
-
-                    b.Navigation("userUpdate");
-                });
-
-            modelBuilder.Entity("fletesProyect.models.routeStation", b =>
-                {
-                    b.HasOne("fletesProyect.models.Station", "stationA")
-                        .WithMany()
-                        .HasForeignKey("stationAId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("fletesProyect.models.Station", "stationB")
-                        .WithMany()
-                        .HasForeignKey("stationBId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("project.users.userEntity", "userUpdate")
-                        .WithMany()
-                        .HasForeignKey("userUpdateId");
-
-                    b.Navigation("stationA");
-
-                    b.Navigation("stationB");
 
                     b.Navigation("userUpdate");
                 });
@@ -1502,11 +1401,6 @@ namespace fletesProyect.Migrations
             modelBuilder.Entity("AvionesBackNet.Models.binnacleHeader", b =>
                 {
                     b.Navigation("binnacleBody");
-                });
-
-            modelBuilder.Entity("fletesProyect.models.Orden", b =>
-                {
-                    b.Navigation("orderDetails");
                 });
 
             modelBuilder.Entity("project.utils.catalogue.catalogueType", b =>

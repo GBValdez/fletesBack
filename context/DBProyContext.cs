@@ -37,6 +37,8 @@ public partial class DBProyContext : IdentityDbContext<userEntity, rolEntity, st
     public DbSet<Catalogue> catalogues { get; set; }
     public DbSet<catalogueType> catalogueTypes { get; set; }
 
+    public DbSet<routeStation> routeStations { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseNpgsql(_configuration.GetConnectionString("DefaultConnection"));
 

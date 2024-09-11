@@ -25,6 +25,8 @@ namespace fletesProyect.models
         public float maximumWeight { get; set; }
         public long modelId { get; set; }
         public Catalogue model { get; set; } = null!;
+        public long countryOptId { get; set; } = 25;
+        public Catalogue countryOpt { get; set; } = null!;
 
     }
 }

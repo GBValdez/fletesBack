@@ -18,15 +18,16 @@ namespace project.utils.catalogues
         public cataloguesController(DBProyContext context, IMapper mapper) : base(context, mapper)
         {
         }
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR,ADMINISTRATOR_AIRLINE")]
 
+        // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
         public override Task<ActionResult<resPag<catalogueDto>>> get([FromQuery] pagQueryDto data, [FromQuery] catalogueQueryDto queryParams)
         {
             return base.get(data, queryParams);
         }
-        protected override async Task modifyPost(Catalogue entity, object queryParams)
+        protected override async Task<errorMessageDto> validPost(Catalogue entity, catalogueCreationDto dtoNew, object queryParams)
         {
             entity.catalogueTypeId = (await getCatalogueType()).Id;
+            return null;
         }
 
         protected Task<catalogueType> getCatalogueType()

@@ -9,6 +9,7 @@ namespace fletesProyect.driver.dto
     {
         public string userId { get; set; }
         public long modelId { get; set; }
+        public long countryOptId { get; set; }
 
     }
 }

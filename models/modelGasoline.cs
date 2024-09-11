@@ -13,6 +13,8 @@ namespace fletesProyect.models
         public Catalogue gasolineType { get; set; } = null!;
         public long modelId { get; set; }
         public Catalogue model { get; set; } = null!;
+        public long typeVehicleId { get; set; }
+        public Catalogue typeVehicle { get; set; } = null!;
         public float gasolineLtsKm { get; set; }
 
     }

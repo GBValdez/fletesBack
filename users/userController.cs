@@ -4,6 +4,7 @@ using System.Text;
 using AutoMapper;
 using AvionesBackNet.Models;
 using AvionesBackNet.users;
+using fletesProyect.models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -257,13 +258,13 @@ namespace project.users
             Client cliente = await context.Clients.Where(c => c.userId == user.Id && c.deleteAt == null).FirstOrDefaultAsync();
             if (cliente != null)
             {
-                claimUser.Add(new Claim("clienteId", cliente.Id.ToString()));
+                claimUser.Add(new Claim("clientId", cliente.Id.ToString()));
             }
-            // Empleado empleado = await context.Empleados.Where(e => e.UserId == user.Id && e.deleteAt == null).FirstOrDefaultAsync();
-            // if (empleado != null)
-            // {
-            //     claimUser.Add(new Claim("empleadoId", empleado.Id.ToString()));
-            // }
+            Driver driverThis = await context.Drivers.Where(e => e.userId == user.Id && e.deleteAt == null).FirstOrDefaultAsync();
+            if (driverThis != null)
+            {
+                claimUser.Add(new Claim("driverId", driverThis.Id.ToString()));
+            }
 
             // Estos son los parametros que guardara el webToken
             List<Claim> claims = new List<Claim>(){

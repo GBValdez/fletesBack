@@ -12,6 +12,7 @@ namespace fletesProyect.driver.modelGasolineModule.dto
 
         public catalogueDto gasolineType { get; set; } = null!;
         public catalogueDto model { get; set; } = null!;
+        public catalogueDto typeVehicle { get; set; } = null!;
 
     }
 }

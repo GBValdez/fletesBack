@@ -91,23 +91,19 @@ namespace project.utils
         [HttpPost]
         public virtual async Task<ActionResult<TDto>> post(TDtoCreation newRegister, [FromQuery] TQueryCreation queryParams)
         {
-            errorMessageDto error = await this.validPost(newRegister, queryParams);
+            TEntity newRegisterEntity = this.mapper.Map<TEntity>(newRegister);
+            errorMessageDto error = await this.validPost(newRegisterEntity, newRegister, queryParams);
             if (error != null)
                 return BadRequest(error);
-            TEntity newRegisterEntity = this.mapper.Map<TEntity>(newRegister);
-            await this.modifyPost(newRegisterEntity, queryParams);
             context.Add(newRegisterEntity);
             await context.SaveChangesAsync();
             await this.finallyPost(newRegisterEntity, newRegister, queryParams);
             return this.mapper.Map<TDto>(newRegisterEntity);
         }
-        protected async virtual Task<errorMessageDto> validPost(TDtoCreation dtoNew, TQueryCreation queryParams)
+
+        protected async virtual Task<errorMessageDto> validPost(TEntity entity, TDtoCreation newRegister, TQueryCreation queryParams)
         {
             return null;
-        }
-        protected async virtual Task modifyPost(TEntity entity, TQueryCreation queryParams)
-        {
-            return;
         }
         protected async virtual Task finallyPost(TEntity entity, TDtoCreation dtoCreation, TQueryCreation queryParams)
         {

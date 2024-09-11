@@ -3,6 +3,7 @@ using System;
 using AvionesBackNet.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace fletesProyect.Migrations
 {
     [DbContext(typeof(DBProyContext))]
-    partial class DBProyContextModelSnapshot : ModelSnapshot
+    [Migration("20240903024904_country")]
+    partial class country
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -675,46 +678,6 @@ namespace fletesProyect.Migrations
                     b.ToTable("productProviders");
                 });
 
-            modelBuilder.Entity("fletesProyect.models.routeStation", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime?>("createAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("deleteAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<double>("distance")
-                        .HasColumnType("double precision");
-
-                    b.Property<long>("stationAId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("stationBId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("updateAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("userUpdateId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("stationAId");
-
-                    b.HasIndex("stationBId");
-
-                    b.HasIndex("userUpdateId");
-
-                    b.ToTable("routeStations");
-                });
-
             modelBuilder.Entity("fletesProyect.models.stationProduct", b =>
                 {
                     b.Property<long>("Id")
@@ -1353,31 +1316,6 @@ namespace fletesProyect.Migrations
                     b.Navigation("product");
 
                     b.Navigation("provider");
-
-                    b.Navigation("userUpdate");
-                });
-
-            modelBuilder.Entity("fletesProyect.models.routeStation", b =>
-                {
-                    b.HasOne("fletesProyect.models.Station", "stationA")
-                        .WithMany()
-                        .HasForeignKey("stationAId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("fletesProyect.models.Station", "stationB")
-                        .WithMany()
-                        .HasForeignKey("stationBId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("project.users.userEntity", "userUpdate")
-                        .WithMany()
-                        .HasForeignKey("userUpdateId");
-
-                    b.Navigation("stationA");
-
-                    b.Navigation("stationB");
 
                     b.Navigation("userUpdate");
                 });

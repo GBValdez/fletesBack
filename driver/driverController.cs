@@ -30,12 +30,12 @@ namespace fletesProyect.driver
         }
         protected override Task<IQueryable<Driver>> modifyGet(IQueryable<Driver> query, object queryParams)
         {
-            query = query.Include(x => x.model).Include(x => x.user);
+            query = query.Include(x => x.model).Include(x => x.user).Include(x => x.countryOpt);
             return base.modifyGet(query, queryParams);
         }
 
 
-        protected override async Task<errorMessageDto> validPost(driveDtoCreation dtoNew, object queryParams)
+        protected override async Task<errorMessageDto> validPost(Driver entity, driveDtoCreation dtoNew, object queryParams)
         {
             userCreationDto userCreation = new userCreationDto
             {
@@ -48,7 +48,7 @@ namespace fletesProyect.driver
             if (registerResult != null)
                 return registerResult;
             userEntity user = await context.Users.FirstOrDefaultAsync(u => u.UserName == dtoNew.userId);
-            dtoNew.userId = user.Id;
+            entity.userId = user.Id;
             return null;
 
         }
