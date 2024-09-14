@@ -81,19 +81,23 @@ namespace fletesProyect.station
                     for (int j = 0; j < listLeg.Count(); j += 2)
                     {
                         // Distancia de ida (desde la estación actual a la otra estación)
+                        Leg legCurrent = listLeg[j];
                         routeStation route = new routeStation
                         {
                             stationAId = entity.Id, // Estación actual
                             stationBId = stationsConnect[j / 2].Id, // Otra estación
-                            distance = listLeg[j].Distance.Value, // Distancia de ida
+                            distance = legCurrent.Distance.Value, // Distancia de ida
+                            duration = legCurrent.Duration.Value / 60   // Duración de ida
                         };
-
+                        Leg legAux = listLeg[j + 1];
                         // Distancia de vuelta (desde la otra estación a la estación actual)
                         routeStation routeReturn = new routeStation
                         {
                             stationAId = stationsConnect[j / 2].Id, // Otra estación
                             stationBId = entity.Id, // Estación actual
-                            distance = listLeg[j + 1].Distance.Value, // Distancia de vuelta
+                            distance = legAux.Distance.Value, // Distancia de vuelta
+                            duration = legAux.Duration.Value / 60   // Duración de vuelta
+
                         };
 
                         // Agregar ambas rutas (ida y vuelta) al contexto

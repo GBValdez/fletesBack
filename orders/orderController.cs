@@ -6,6 +6,7 @@ using AutoMapper;
 using AvionesBackNet.Models;
 using AvionesBackNet.utils.dto;
 using fletesProyect.driver;
+using fletesProyect.driver.dto;
 using fletesProyect.googleMaps;
 using fletesProyect.models;
 using fletesProyect.orders.dto;
@@ -43,7 +44,7 @@ namespace fletesProyect.orders
             //Buscamos a los vehiculos que tenga compatibilidad con los productos de la orden
             List<long> productIds = newRegister.orderDetails.Select(od => od.productId).ToList();
 
-            Dictionary<long, int> productQuantitiesRequired = newRegister.orderDetails.ToDictionary(od => od.productId, od => od.quantity);
+            Dictionary<long, long> productQuantitiesRequired = newRegister.orderDetails.ToDictionary(od => od.productId, od => od.quantity);
 
             IQueryable<long> query = context.VehicleProducts
                 .Where(vp => productIds.Contains(vp.productId)) // Filtrar solo los productos relevantes
@@ -61,8 +62,9 @@ namespace fletesProyect.orders
 
             double TOTAL_WEIGHT = products.Sum(p => p.weight);
 
-            List<long> modelGasolines = await context.modelGasolines
-                .Where(mg => idTypeVehicle.Contains(mg.typeVehicleId) && mg.maximumWeight > TOTAL_WEIGHT).Select(mg => mg.modelId).Distinct().ToListAsync();
+            List<modelGasoline> modelGasolines = await context.modelGasolines
+                .Where(mg => idTypeVehicle.Contains(mg.typeVehicleId) && mg.maximumWeight > TOTAL_WEIGHT).Include(md => md.gasolineType).ToListAsync();
+            List<long> modelGasolineIds = modelGasolines.Select(mg => mg.modelId).ToList();
             TimeSpan time = DateTime.Now.TimeOfDay;
 
 
@@ -80,7 +82,7 @@ namespace fletesProyect.orders
             }
 
             List<Driver> driversAvailable = await context.Drivers
-                .Where(d => d.openingTime <= time && d.closingTime >= time && modelGasolines.Contains(d.modelId) && d.countryOptId == validZone.data)
+                .Where(d => d.openingTime <= time && d.closingTime >= time && modelGasolineIds.Contains(d.modelId) && d.countryOptId == validZone.data)
                 .ToListAsync();
 
             List<Station> stationsAvailable = await context.stations
@@ -106,33 +108,126 @@ namespace fletesProyect.orders
             {
                 List<routeStation> route = routeStations.Where(rs => rs.stationAId == current.Id && idStations.Contains(rs.stationBId)).ToList();
                 List<stationProduct> stationProductMe = stationProducts.Where(sp => sp.stationId == current.Id).ToList();
-                routers.Add(new routerDto(current.Id, route, stationProductMe));
+                routers.Add(new routerDto(current, route, stationProductMe));
             }
 
-            double minCost = 99999999;
-            Func<foundOrderDto, routerDto, routerDto, foundOrderDto> found = (foundOrderDto before, routerDto beforeRoute, routerDto currentRouter) =>
-            {
-                foundOrderDto myFound = mapper.Map<foundOrderDto>(before);
-                double distance = beforeRoute.routeStations.Where(rs => rs.stationBId == currentRouter.idStation).Select(rs => rs.distance).FirstOrDefault();
-                // myFound.costTotal += distance*before.driver.;
-                // if (minCost < myFound.distanceTotal)
-                // return null;
-
-                myFound.routes.Add(currentRouter.idStation);
-                return myFound;
-            };
-
+            List<driverGasolineDto> driverList = new List<driverGasolineDto>();
             foreach (Driver current in driversAvailable)
             {
-                string cord = _driversHub.GetDriverPosition(current.Id);
+                modelGasoline modelGasoline = modelGasolines.Where(mg => mg.modelId == current.modelId).FirstOrDefault();
+                driverList.Add(new driverGasolineDto(current.Id, modelGasoline));
+            }
+
+            Func<foundOrderDto, routerDto?, routerDto, double, foundOrderDto> found = null;
+            found = (foundOrderDto before, routerDto? beforeRoute, routerDto currentRouter, double minCost) =>
+            {
+                foundOrderDto myFound = mapper.Map<foundOrderDto>(before);
+                Visit visitNew = new Visit();
+                visitNew.stationId = currentRouter.station.Id;
+                myFound.routes.Add(visitNew);
+                //Ver consumo de gasolina
+                //------------------------------------------------------
+                if (beforeRoute != null)
+                {
+                    routeStation rCurrent = beforeRoute.routeStations.Where(rs => rs.stationBId == currentRouter.station.Id).FirstOrDefault();
+
+                    myFound.costTotal += calculateCost(rCurrent.distance, myFound.driver);
+                    myFound.durationTotal += rCurrent.duration;
+
+                }
+                DateTime estimatedDate = DateTime.Now.ToUniversalTime().AddMinutes(myFound.durationTotal);
+                visitNew.estimatedDate = estimatedDate;
+
+                if (minCost < myFound.costTotal)
+                    return null;
+                //------------------------------------------------------
+                //Verificar productos
+                //------------------------------------------------------
+                List<stationProduct> stationProducts = currentRouter.stationProducts;
+                foreach (orderDetaillDtoCreation currentDetail in myFound.orderDetails)
+                {
+                    if (currentDetail.quantity == 0)
+                        continue;
+                    stationProduct stationProduct = stationProducts.Where(sp => sp.productId == currentDetail.productId).FirstOrDefault();
+                    if (stationProduct == null)
+                        continue;
+                    if (stationProduct.stock == 0)
+                        continue;
+                    visitProduct visitProductNew = new visitProduct();
+                    visitProductNew.quantity = Math.Min(stationProduct.stock, currentDetail.quantity);
+                    visitProductNew.ordenDetailId = currentDetail.productId;
+                    currentDetail.quantity -= visitProductNew.quantity;
+                    visitNew.visitProducts.Add(visitProductNew);
+                }
+
+                if (myFound.orderDetails.All(od => od.quantity == 0))
+                {
+                    myFound.ultimeCord = currentRouter.station.cord;
+                    return myFound;
+                }
+                //------------------------------------------------------
+                //Buscar en SubRutas si no hemos cumplido con los productos de la orden
+                List<long> idsStationRoutes = myFound.routes.Select(r => r.stationId).ToList();
+                List<routeStation> routesMissing = currentRouter.routeStations.Where(rs => !idsStationRoutes.Contains(rs.stationBId)).ToList();
+                double minCurrent = minCost;
+                foundOrderDto minFound = null;
+                foreach (routeStation current in routesMissing)
+                {
+                    routerDto router = routers.Where(r => r.station.Id == current.stationBId).FirstOrDefault();
+                    foundOrderDto foundStation = found(myFound, currentRouter, router, minCurrent);
+                    if (foundStation != null)
+                    {
+                        minCurrent = foundStation.costTotal;
+                        minFound = foundStation;
+                    }
+                }
+                return minFound;
+            };
+
+            foundOrderDto finalFound = new foundOrderDto(newRegister.orderDetails, null);
+            finalFound.costTotal = double.MaxValue;
+            string cordDriver = null;
+            foreach (driverGasolineDto current in driverList)
+            {
+                string cord = _driversHub.GetDriverPosition(current.id);
                 if (cord != null)
                 {
+                    foreach (routerDto currentRI in routers)
+                    {
+                        foundOrderDto foundOrder = new foundOrderDto(newRegister.orderDetails, current);
+                        double distanceC = googleMapsSvc.Harvesine(cord, currentRI.station.cord);
+                        foundOrder.costTotal = calculateCost(distanceC, current);
+                        foundOrder.durationTotal = distanceC / 0.83;
+                        foundOrderDto currentFound = found(foundOrder, null, currentRI, double.MaxValue);
+                        if (currentFound != null)
+                        {
+                            if (currentFound.costTotal < finalFound.costTotal)
+                            {
+                                finalFound = currentFound;
+                                cordDriver = cord;
+                            }
+                        }
+                    }
 
                 }
             }
 
+            if (finalFound.ultimeCord == null)
+            {
+                return new errorMessageDto("No se pudo encontrar una ruta para la orden");
+            }
+
+            //Guardamos la info
+            entity.driverId = finalFound.driver.id;
+            entity.originCoord = cordDriver;
 
             return null;
+        }
+        public double calculateCost(double distance, driverGasolineDto driver)
+        {
+            double costGalGas = double.Parse(driver.modelGasoline.gasolineType.description);
+            double consumeGalKm = driver.modelGasoline.gasolineLtsKm;
+            return distance * consumeGalKm * costGalGas;
         }
     }
 }

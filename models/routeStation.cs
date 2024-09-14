@@ -17,6 +17,7 @@ namespace fletesProyect.models
         [ForeignKey("stationBId")]
         public Station stationB { get; set; } = null!;
         public double distance { get; set; }
+        public double duration { get; set; }
 
     }
 }

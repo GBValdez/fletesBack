@@ -7,7 +7,7 @@ namespace fletesProyect.orders.dto
 {
     public class orderDetailDtoBase
     {
-        public int quantity { get; set; }
+        public long quantity { get; set; }
 
     }
 }

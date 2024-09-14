@@ -146,7 +146,7 @@ namespace fletesProyect.googleMaps
             // Distancia
             double distance = R * c; // Resultado en metros
 
-            return distance;
+            return distance / 1000;
         }
     }
 }

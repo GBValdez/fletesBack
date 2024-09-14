@@ -8,13 +8,13 @@ namespace fletesProyect.orders.dto
 {
     public class routerDto
     {
-        public routerDto(long idStation, List<routeStation> routeStations, List<stationProduct> stationProducts)
+        public routerDto(Station Station, List<routeStation> routeStations, List<stationProduct> stationProducts)
         {
-            this.idStation = idStation;
+            this.station = Station;
             this.routeStations = routeStations;
             this.stationProducts = stationProducts;
         }
-        public long idStation { get; }
+        public Station station { get; }
         public List<routeStation> routeStations { get; }
         public List<stationProduct> stationProducts { get; }
     }

@@ -3,6 +3,7 @@ using System;
 using AvionesBackNet.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace fletesProyect.Migrations
 {
     [DbContext(typeof(DBProyContext))]
-    partial class DBProyContextModelSnapshot : ModelSnapshot
+    [Migration("20240914020857_a")]
+    partial class a
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -466,6 +469,12 @@ namespace fletesProyect.Migrations
                     b.Property<DateTime>("estimatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<long>("ordenDetailId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("quantity")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("realDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -479,6 +488,8 @@ namespace fletesProyect.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ordenDetailId");
 
                     b.HasIndex("stationId");
 
@@ -684,8 +695,8 @@ namespace fletesProyect.Migrations
                     b.Property<double>("distance")
                         .HasColumnType("double precision");
 
-                    b.Property<double>("duration")
-                        .HasColumnType("double precision");
+                    b.Property<int>("duration")
+                        .HasColumnType("integer");
 
                     b.Property<long>("stationAId")
                         .HasColumnType("bigint");
@@ -1221,6 +1232,12 @@ namespace fletesProyect.Migrations
 
             modelBuilder.Entity("fletesProyect.models.Visit", b =>
                 {
+                    b.HasOne("fletesProyect.models.ordenDetail", "ordenDetail")
+                        .WithMany()
+                        .HasForeignKey("ordenDetailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("fletesProyect.models.Station", "station")
                         .WithMany()
                         .HasForeignKey("stationId")
@@ -1230,6 +1247,8 @@ namespace fletesProyect.Migrations
                     b.HasOne("project.users.userEntity", "userUpdate")
                         .WithMany()
                         .HasForeignKey("userUpdateId");
+
+                    b.Navigation("ordenDetail");
 
                     b.Navigation("station");
 
