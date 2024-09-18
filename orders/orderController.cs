@@ -75,20 +75,8 @@ namespace fletesProyect.orders
 
             Dictionary<long, long> productQuantitiesRequired = newRegister.orderDetails.ToDictionary(od => od.productId, od => od.quantity);
 
-            // IQueryable<long> query = context.VehicleProducts
-            //     .Where(vp => productIds.Contains(vp.productId)) // Filtrar solo los productos relevantes
-            //     .GroupBy(vp => vp.typeVehicleId) // Agrupar por tipo de vehículo
-            //     .Where(g => g
-            //         .All(vp => vp.quantity >= productQuantitiesRequired[vp.productId]) // Verificar que puede cargar la cantidad requerida de cada producto
-            //          && g.Select(vp => vp.productId).Distinct().Count() == productIds.Count // Asegurarse de que cubre todos los productos
-            //     )
-            //     .Select(g => g.Key); // Seleccionar el ID del tipo de vehículo compatible
-
-            // List<long> idTypeVehicle = await query.ToListAsync();
-            // Obtener los vehicleProducts que coinciden con los productos de la orden desde la base de datos
-
             List<vehicleProduct> vehicleProducts = await context.VehicleProducts
-                .Where(vp => productIds.Contains(vp.productId))
+                .Where(vp => productIds.Contains(vp.productId) && vp.deleteAt == null)
                 .ToListAsync(); // Ejecuta la consulta en la base de datos y carga los resultados en memoria
 
             // Agrupar por typeVehicleId y realizar el filtrado en memoria
@@ -102,18 +90,27 @@ namespace fletesProyect.orders
                 .ToList(); // Obtener la lista de IDs de los tipos de vehículos compatibles
 
             List<product> products = await context.Products
-                .Where(p => productIds.Contains(p.Id)).ToListAsync();
+                .Where(p => productIds.Contains(p.Id) && p.deleteAt == null).ToListAsync();
 
             double TOTAL_WEIGHT = products.Sum(p => p.weight);
 
             List<modelGasoline> modelGasolines = await context.modelGasolines
-                .Where(mg => idTypeVehicle.Contains(mg.typeVehicleId) && mg.maximumWeight > TOTAL_WEIGHT).Include(md => md.gasolineType).ToListAsync();
+                .Where(mg => idTypeVehicle.Contains(mg.typeVehicleId) && mg.maximumWeight > TOTAL_WEIGHT && mg.deleteAt == null).Include(md => md.gasolineType).ToListAsync();
             List<long> modelGasolineIds = modelGasolines.Select(mg => mg.modelId).ToList();
             TimeSpan time = DateTime.Now.TimeOfDay;
 
+
+            //Proveedores
+            List<productProvider> productProviders = await context.productProviders
+                .Where(pp => productIds.Contains(pp.productId) && pp.deleteAt == null).ToListAsync();
+
+            List<long> providerIds = productProviders.Select(pp => pp.providerId).Distinct().ToList();
             //Estaciones disponibles
             List<stationProduct> stationProducts = await context.stationProducts
-                .Where(sp => productIds.Contains(sp.productId) && sp.stock > 0).ToListAsync();
+                .Where(sp => productIds.
+                    Contains(sp.productId) && sp.stock > 0 && providerIds.Contains(sp.station.providerId) && sp.deleteAt == null
+                    )
+                .Include(st => st.station).ToListAsync();
             List<long> stationProductsIds = stationProducts.Select(sp => sp.stationId).Distinct().ToList();
 
             double lat = double.Parse(newRegister.deliveryCoord.Split(',')[0]);
@@ -141,7 +138,7 @@ namespace fletesProyect.orders
             }
             if (stationsAvailable.Count == 0)
             {
-                return BadRequest(new errorMessageDto("No hay estaciones disponibles en la zona"));
+                return BadRequest(new errorMessageDto("No hay estaciones disponibles con los productos solicitados en la zona"));
             }
 
             List<long> idStations = stationsAvailable.Select(s => s.Id).ToList();
@@ -153,7 +150,10 @@ namespace fletesProyect.orders
             foreach (Station current in stationsAvailable)
             {
                 List<routeStation> route = routeStations.Where(rs => rs.stationAId == current.Id && idStations.Contains(rs.stationBId)).ToList();
-                List<stationProduct> stationProductMe = stationProducts.Where(sp => sp.stationId == current.Id).ToList();
+                List<stationProduct> stationProductMe = stationProducts.
+                    Where(sp => sp.stationId == current.Id && productProviders.
+                        Any(pro => pro.productId == sp.productId && pro.providerId == sp.station.providerId)
+                    ).ToList();
                 routers.Add(new routerDto(current, route, stationProductMe));
             }
 
@@ -188,12 +188,12 @@ namespace fletesProyect.orders
                 //------------------------------------------------------
                 //Verificar productos
                 //------------------------------------------------------
-                List<stationProduct> stationProducts = currentRouter.stationProducts;
+                List<stationProduct> stationProductsCurrent = currentRouter.stationProducts;
                 foreach (orderDetaillDtoCreation currentDetail in myFound.orderDetails)
                 {
                     if (currentDetail.quantity == 0)
                         continue;
-                    stationProduct stationProduct = stationProducts.Where(sp => sp.productId == currentDetail.productId).FirstOrDefault();
+                    stationProduct stationProduct = stationProductsCurrent.Where(sp => sp.productId == currentDetail.productId).FirstOrDefault();
                     if (stationProduct == null)
                         continue;
                     if (stationProduct.stock == 0)
