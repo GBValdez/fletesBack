@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using AvionesBackNet.Models;
+using AvionesBackNet.utils;
 using AvionesBackNet.utils.dto;
 using fletesProyect.driver;
 using fletesProyect.driver.dto;
@@ -13,6 +14,7 @@ using fletesProyect.orders.dto;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using project.utils;
 using project.utils.dto;
@@ -23,22 +25,18 @@ namespace fletesProyect.orders
     [Route("[controller]")]
     public class OrderController : controllerCommons<Orden, orderDtoCreation, orderDto, object, object, long>
     {
-        HttpContextAccessor _accessor;
         googleMapsSvc _googleMapsSvc;
-        orderSvc _orderSvc;
-        driversHub _driversHub;
-        public OrderController(DBProyContext context, IMapper mapper, HttpContextAccessor httpContext, googleMapsSvc googleMapsSvc, driversHub driversHub, orderSvc orderSvc) : base(context, mapper)
+        IHubContext<driversHub> _driversHub;
+        public OrderController(DBProyContext context, IMapper mapper, googleMapsSvc googleMapsSvc, IHubContext<driversHub> driversHub) : base(context, mapper)
         {
-            _accessor = httpContext;
             _googleMapsSvc = googleMapsSvc;
             _driversHub = driversHub;
-            _orderSvc = orderSvc;
 
         }
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "userNormal")]
-        public override Task<ActionResult<orderDto>> post(orderDtoCreation newRegister, [FromQuery] object queryParams)
+        public async override Task<ActionResult<orderDto>> post(orderDtoCreation newRegister, [FromQuery] object queryParams)
         {
-            return base.post(newRegister, queryParams);
+            return BadRequest(new errorMessageDto("No se puede crear una orden de esta forma"));
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
@@ -59,18 +57,16 @@ namespace fletesProyect.orders
             return base.get(infoQuery, queryParams);
         }
 
-        // public Task<ActionResult> createOrder([FromBody] orderDtoCreation newRegister)
-        // {
-        // }
-
-
-        protected override async Task<errorMessageDto> validPost(Orden entity, orderDtoCreation newRegister, object queryParams)
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "userNormal")]
+        [HttpPost("createOrder")]
+        public async Task<ActionResult> createOrder([FromBody] orderDtoCreation newRegister)
         {
+            Orden entity = mapper.Map<Orden>(newRegister);
             //Asignamos el id del cliente al que pertenece la orden
             string idClient = User.Claims.FirstOrDefault(c => c.Type == "clientId")?.Value;
             if (idClient == null)
             {
-                return new errorMessageDto("No se ha encontrado el id del cliente");
+                return BadRequest(new errorMessageDto("No se ha encontrado el id del cliente"));
             }
             entity.clientId = long.Parse(idClient);
 
@@ -79,16 +75,31 @@ namespace fletesProyect.orders
 
             Dictionary<long, long> productQuantitiesRequired = newRegister.orderDetails.ToDictionary(od => od.productId, od => od.quantity);
 
-            IQueryable<long> query = context.VehicleProducts
-                .Where(vp => productIds.Contains(vp.productId)) // Filtrar solo los productos relevantes
+            // IQueryable<long> query = context.VehicleProducts
+            //     .Where(vp => productIds.Contains(vp.productId)) // Filtrar solo los productos relevantes
+            //     .GroupBy(vp => vp.typeVehicleId) // Agrupar por tipo de vehículo
+            //     .Where(g => g
+            //         .All(vp => vp.quantity >= productQuantitiesRequired[vp.productId]) // Verificar que puede cargar la cantidad requerida de cada producto
+            //          && g.Select(vp => vp.productId).Distinct().Count() == productIds.Count // Asegurarse de que cubre todos los productos
+            //     )
+            //     .Select(g => g.Key); // Seleccionar el ID del tipo de vehículo compatible
+
+            // List<long> idTypeVehicle = await query.ToListAsync();
+            // Obtener los vehicleProducts que coinciden con los productos de la orden desde la base de datos
+
+            List<vehicleProduct> vehicleProducts = await context.VehicleProducts
+                .Where(vp => productIds.Contains(vp.productId))
+                .ToListAsync(); // Ejecuta la consulta en la base de datos y carga los resultados en memoria
+
+            // Agrupar por typeVehicleId y realizar el filtrado en memoria
+            List<long> idTypeVehicle = vehicleProducts
                 .GroupBy(vp => vp.typeVehicleId) // Agrupar por tipo de vehículo
                 .Where(g => g
-                    .All(vp => vp.quantity >= productQuantitiesRequired[vp.productId]) // Verificar que puede cargar la cantidad requerida de cada producto
-                     && g.Select(vp => vp.productId).Distinct().Count() == productIds.Count // Asegurarse de que cubre todos los productos
+                    .All(vp => vp.quantity >= productQuantitiesRequired[vp.productId]) // Verificar en memoria si el vehículo puede cargar las cantidades requeridas
+                    && g.Select(vp => vp.productId).Distinct().Count() == productIds.Count // Verificar que cubre todos los productos
                 )
-                .Select(g => g.Key); // Seleccionar el ID del tipo de vehículo compatible
-
-            List<long> idTypeVehicle = await query.ToListAsync();
+                .Select(g => g.Key)
+                .ToList(); // Obtener la lista de IDs de los tipos de vehículos compatibles
 
             List<product> products = await context.Products
                 .Where(p => productIds.Contains(p.Id)).ToListAsync();
@@ -100,19 +111,17 @@ namespace fletesProyect.orders
             List<long> modelGasolineIds = modelGasolines.Select(mg => mg.modelId).ToList();
             TimeSpan time = DateTime.Now.TimeOfDay;
 
-
             //Estaciones disponibles
             List<stationProduct> stationProducts = await context.stationProducts
                 .Where(sp => productIds.Contains(sp.productId) && sp.stock > 0).ToListAsync();
             List<long> stationProductsIds = stationProducts.Select(sp => sp.stationId).Distinct().ToList();
-            _orderSvc.stationProducts = stationProducts;
 
             double lat = double.Parse(newRegister.deliveryCoord.Split(',')[0]);
             double lng = double.Parse(newRegister.deliveryCoord.Split(',')[1]);
             errClass<long> validZone = await _googleMapsSvc.validCountry(lat, lng);
             if (validZone.error != null)
             {
-                return validZone.error;
+                return BadRequest(validZone.error);
             }
 
             List<long> listOrdersDriverId = await context.Orders
@@ -128,18 +137,17 @@ namespace fletesProyect.orders
 
             if (driversAvailable.Count == 0)
             {
-                return new errorMessageDto("No hay conductores disponibles en la zona");
+                return BadRequest(new errorMessageDto("No hay conductores disponibles en la zona"));
             }
             if (stationsAvailable.Count == 0)
             {
-                return new errorMessageDto("No hay estaciones disponibles en la zona");
+                return BadRequest(new errorMessageDto("No hay estaciones disponibles en la zona"));
             }
 
             List<long> idStations = stationsAvailable.Select(s => s.Id).ToList();
             List<routeStation> routeStations = await context.routeStations
                 .Where(rs => idStations.Contains(rs.stationAId))
                 .ToListAsync();
-            _orderSvc.stations = stationsAvailable;
 
             List<routerDto> routers = new List<routerDto>();
             foreach (Station current in stationsAvailable)
@@ -159,10 +167,9 @@ namespace fletesProyect.orders
             Func<foundOrderDto, routerDto?, routerDto, double, foundOrderDto> found = null;
             found = (foundOrderDto before, routerDto? beforeRoute, routerDto currentRouter, double minCost) =>
             {
-                foundOrderDto myFound = mapper.Map<foundOrderDto>(before);
+                foundOrderDto myFound = Utils.CreateDeepCopy<foundOrderDto>(before);
                 Visit visitNew = new Visit();
                 visitNew.stationId = currentRouter.station.Id;
-                myFound.routes.Add(visitNew);
                 //Ver consumo de gasolina
                 //------------------------------------------------------
                 if (beforeRoute != null)
@@ -197,6 +204,7 @@ namespace fletesProyect.orders
                     currentDetail.quantity -= visitProductNew.quantity;
                     visitNew.visitProducts.Add(visitProductNew);
                 }
+                myFound.routes.Add(visitNew);
 
                 if (myFound.orderDetails.All(od => od.quantity == 0))
                 {
@@ -224,12 +232,11 @@ namespace fletesProyect.orders
 
             foundOrderDto finalFound = new foundOrderDto(newRegister.orderDetails, null);
             finalFound.costTotal = double.MaxValue;
-            string cordDriver = null;
             int index = -1;
             foreach (driverGasolineDto current in driverList)
             {
                 index++;
-                string cord = _driversHub.GetDriverPosition(index);
+                string cord = GetDriverPosition(index);
                 if (cord != null)
                 {
                     foreach (routerDto currentRI in routers)
@@ -253,7 +260,7 @@ namespace fletesProyect.orders
                             if (currentFound.costTotal < finalFound.costTotal)
                             {
                                 finalFound = currentFound;
-                                cordDriver = cord;
+                                finalFound.originCoord = cord;
                             }
                         }
                     }
@@ -263,21 +270,18 @@ namespace fletesProyect.orders
 
             if (finalFound.ultimeCord == null)
             {
-                return new errorMessageDto("No se pudo encontrar una ruta para la orden");
+                return BadRequest(new errorMessageDto("No se pudo encontrar una ruta para la orden"));
             }
 
             //Guardamos la info
             entity.driverId = finalFound.driver.id;
-            entity.originCoord = cordDriver;
-            _orderSvc.visits = finalFound.routes;
-            return null;
-        }
-
-        protected override async Task finallyPost(Orden entity, orderDtoCreation dtoCreation, object queryParams)
-        {
+            entity.originCoord = finalFound.originCoord;
+            await context.AddAsync(entity);
+            await context.SaveChangesAsync();
+            //Visitas
             List<string> cords = new List<string>();
             cords.Add(entity.originCoord);
-            foreach (Visit visit in _orderSvc.visits)
+            foreach (Visit visit in finalFound.routes)
             {
                 visit.orderId = entity.Id;
                 foreach (visitProduct visitProduct in visit.visitProducts)
@@ -285,23 +289,39 @@ namespace fletesProyect.orders
                     long productId = visitProduct.ordenDetailId;
                     ordenDetail ordenDetail = entity.orderDetails.Where(od => od.productId == productId).FirstOrDefault();
                     visitProduct.ordenDetailId = ordenDetail.Id;
-                    stationProduct stationProduct = _orderSvc.stationProducts.Where(sp => sp.productId == productId && sp.stationId == visit.stationId).FirstOrDefault();
+                    stationProduct stationProduct = stationProducts.Where(sp => sp.productId == productId && sp.stationId == visit.stationId).FirstOrDefault();
                     stationProduct.stock -= visitProduct.quantity;
                 }
-                Station station = _orderSvc.stations.Where(s => s.Id == visit.stationId).FirstOrDefault();
+                Station station = stationsAvailable.Where(s => s.Id == visit.stationId).FirstOrDefault();
                 cords.Add(station.cord);
-                await context.visits.AddAsync(visit);
+                await context.AddAsync(visit);
             }
-            cords.Add(dtoCreation.deliveryCoord);
+            cords.Add(newRegister.deliveryCoord);
             // _googleMapsSvc.calculateDistance(cords).Result.Routes.First().Legs.First().
             await context.SaveChangesAsync();
 
+            return Ok();
         }
         private double calculateCost(double distance, driverGasolineDto driver)
         {
             double costGalGas = double.Parse(driver.modelGasoline.gasolineType.description);
             double consumeGalKm = driver.modelGasoline.gasolineLtsKm;
             return distance * consumeGalKm * costGalGas;
+        }
+        private string? GetDriverPosition(long driverId)
+        {
+            // if (DriverPositions.TryGetValue(driverId, out var position))
+            // {
+            //     return position;
+            // }
+            // return null;
+            List<string> positions = new List<string>();
+            positions.Add("16.906682, -89.940174");
+            positions.Add("16.915402, -89.955067");
+            positions.Add("16.930593, -89.931335");
+            positions.Add("16.919754, -89.926014");
+            positions.Add(null);
+            return positions[(int)driverId];
         }
     }
 }

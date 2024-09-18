@@ -20,7 +20,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -36,7 +35,6 @@ builder.Services.AddScoped<interceptorDb>();
 builder.Services.AddScoped<emailService>();
 builder.Services.AddScoped<userSvc>();
 builder.Services.AddScoped<googleMapsSvc>();
-builder.Services.AddScoped<orderSvc>();
 builder.Services.AddSignalR();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddDbContext<DBProyContext>((serviceProvider, options) =>

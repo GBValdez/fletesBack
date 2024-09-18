@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using AvionesBackNet.utils.dto;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using project.utils.dto;
 
 namespace AvionesBackNet.utils
@@ -60,6 +61,25 @@ namespace AvionesBackNet.utils
                 totalPages = totalPages
             };
             return res;
+        }
+
+        public static TTEntity CreateDeepCopy<TTEntity>(TTEntity obj) where TTEntity : class
+        {
+            if (obj == null)
+            {
+                return null;
+            }
+
+            var jsonSettings = new JsonSerializerSettings()
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                Formatting = Formatting.None,
+            };
+            jsonSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+
+            var serialized = JsonConvert.SerializeObject(obj, jsonSettings);
+
+            return System.Text.Json.JsonSerializer.Deserialize<TTEntity>(serialized);
         }
 
     }

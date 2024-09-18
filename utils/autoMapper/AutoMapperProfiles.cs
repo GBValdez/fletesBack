@@ -58,6 +58,12 @@ namespace project.utils.autoMapper
             CreateMap<modelGasolineDtoCreation, modelGasoline>();
 
             CreateMap<foundOrderDto, foundOrderDto>();
+
+            CreateMap<Orden, orderDto>();
+            CreateMap<orderDtoCreation, Orden>();
+
+            CreateMap<ordenDetail, orderDetailDto>();
+            CreateMap<orderDetaillDtoCreation, ordenDetail>();
         }
 
     }
