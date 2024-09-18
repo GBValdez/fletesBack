@@ -24,7 +24,6 @@ namespace project.users
     [ApiController]
     [Route("user")]
     // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
-
     public class userController : controllerCommons<userEntity, userUpdateDto, userDto, userQueryDto, object, string>
     {
         //Esto nos va servir para crear nuevos usuarios 
@@ -98,6 +97,8 @@ namespace project.users
             return userDto;
         }
 
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
         public override async Task<ActionResult> delete(string id)
         {
             userEntity user = await userManager.FindByNameAsync(id);

@@ -7,6 +7,8 @@ using AvionesBackNet.Models;
 using fletesProyect.models;
 using fletesProyect.providersModule.dto;
 using fletesProyect.utils.dto;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using project.utils;
 
@@ -14,6 +16,8 @@ namespace fletesProyect.providersModule
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
+
     public class providerController : controllerCommons<Provider, providerDtoBase, providerDto, idDto, object, long>
     {
         public providerController(DBProyContext context, IMapper mapper) : base(context, mapper)

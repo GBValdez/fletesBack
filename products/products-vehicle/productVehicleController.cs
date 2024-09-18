@@ -7,6 +7,8 @@ using AvionesBackNet.Models;
 using fletesProyect.models;
 using fletesProyect.products.productsVehicle.dtos;
 using fletesProyect.utils.dto;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using project.utils;
@@ -16,6 +18,8 @@ namespace fletesProyect.products.productsVehicle
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
+
     public class productVehicleController : controllerCommons<vehicleProduct, prodVehicleDtoCreation, prodVehicleDto, idDto, object, long>
     {
         public productVehicleController(DBProyContext context, IMapper mapper) : base(context, mapper)

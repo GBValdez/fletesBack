@@ -14,6 +14,8 @@ namespace fletesProyect.models
         public long stationId { get; set; }
         public Station station { get; set; } = null!;
         public List<visitProduct> visitProducts { get; set; } = new List<visitProduct>();
+        public long orderId { get; set; }
+        public Orden order { get; set; } = null!;
 
     }
 }

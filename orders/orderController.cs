@@ -10,6 +10,8 @@ using fletesProyect.driver.dto;
 using fletesProyect.googleMaps;
 using fletesProyect.models;
 using fletesProyect.orders.dto;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using project.utils;
@@ -23,14 +25,45 @@ namespace fletesProyect.orders
     {
         HttpContextAccessor _accessor;
         googleMapsSvc _googleMapsSvc;
+        orderSvc _orderSvc;
         driversHub _driversHub;
-        public OrderController(DBProyContext context, IMapper mapper, HttpContextAccessor httpContext, googleMapsSvc googleMapsSvc, driversHub driversHub) : base(context, mapper)
+        public OrderController(DBProyContext context, IMapper mapper, HttpContextAccessor httpContext, googleMapsSvc googleMapsSvc, driversHub driversHub, orderSvc orderSvc) : base(context, mapper)
         {
             _accessor = httpContext;
             _googleMapsSvc = googleMapsSvc;
             _driversHub = driversHub;
+            _orderSvc = orderSvc;
 
         }
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "userNormal")]
+        public override Task<ActionResult<orderDto>> post(orderDtoCreation newRegister, [FromQuery] object queryParams)
+        {
+            return base.post(newRegister, queryParams);
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
+        public override Task<ActionResult> delete(long id)
+        {
+            return base.delete(id);
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
+        public override Task<ActionResult> put(orderDtoCreation entityCurrent, [FromRoute] long id, [FromQuery] object queryCreation)
+        {
+            return base.put(entityCurrent, id, queryCreation);
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "userNormal,ADMINISTRATOR")]
+        public override Task<ActionResult<resPag<orderDto>>> get([FromQuery] pagQueryDto infoQuery, [FromQuery] object queryParams)
+        {
+            return base.get(infoQuery, queryParams);
+        }
+
+        // public Task<ActionResult> createOrder([FromBody] orderDtoCreation newRegister)
+        // {
+        // }
+
+
         protected override async Task<errorMessageDto> validPost(Orden entity, orderDtoCreation newRegister, object queryParams)
         {
             //Asignamos el id del cliente al que pertenece la orden
@@ -72,6 +105,7 @@ namespace fletesProyect.orders
             List<stationProduct> stationProducts = await context.stationProducts
                 .Where(sp => productIds.Contains(sp.productId) && sp.stock > 0).ToListAsync();
             List<long> stationProductsIds = stationProducts.Select(sp => sp.stationId).Distinct().ToList();
+            _orderSvc.stationProducts = stationProducts;
 
             double lat = double.Parse(newRegister.deliveryCoord.Split(',')[0]);
             double lng = double.Parse(newRegister.deliveryCoord.Split(',')[1]);
@@ -81,8 +115,11 @@ namespace fletesProyect.orders
                 return validZone.error;
             }
 
+            List<long> listOrdersDriverId = await context.Orders
+                .Where(o => o.deliveryDate == null && o.deleteAt == null).Select(o => o.driverId).Distinct().ToListAsync();
+
             List<Driver> driversAvailable = await context.Drivers
-                .Where(d => d.openingTime <= time && d.closingTime >= time && modelGasolineIds.Contains(d.modelId) && d.countryOptId == validZone.data)
+                .Where(d => d.openingTime <= time && d.closingTime >= time && modelGasolineIds.Contains(d.modelId) && d.countryOptId == validZone.data && !listOrdersDriverId.Contains(d.Id))
                 .ToListAsync();
 
             List<Station> stationsAvailable = await context.stations
@@ -102,6 +139,7 @@ namespace fletesProyect.orders
             List<routeStation> routeStations = await context.routeStations
                 .Where(rs => idStations.Contains(rs.stationAId))
                 .ToListAsync();
+            _orderSvc.stations = stationsAvailable;
 
             List<routerDto> routers = new List<routerDto>();
             foreach (Station current in stationsAvailable)
@@ -187,20 +225,31 @@ namespace fletesProyect.orders
             foundOrderDto finalFound = new foundOrderDto(newRegister.orderDetails, null);
             finalFound.costTotal = double.MaxValue;
             string cordDriver = null;
+            int index = -1;
             foreach (driverGasolineDto current in driverList)
             {
-                string cord = _driversHub.GetDriverPosition(current.id);
+                index++;
+                string cord = _driversHub.GetDriverPosition(index);
                 if (cord != null)
                 {
                     foreach (routerDto currentRI in routers)
                     {
                         foundOrderDto foundOrder = new foundOrderDto(newRegister.orderDetails, current);
+                        // Verificar costo de la posicion del conductor a la primera estacion
                         double distanceC = googleMapsSvc.Harvesine(cord, currentRI.station.cord);
                         foundOrder.costTotal = calculateCost(distanceC, current);
                         foundOrder.durationTotal = distanceC / 0.83;
                         foundOrderDto currentFound = found(foundOrder, null, currentRI, double.MaxValue);
                         if (currentFound != null)
                         {
+                            if (currentFound.ultimeCord == null)
+                            {
+                                continue;
+                            }
+                            //Verificar la distancia de la ultima estacion a la entrega
+                            double distanceUltime = googleMapsSvc.Harvesine(currentFound.ultimeCord, newRegister.deliveryCoord);
+                            currentFound.costTotal += calculateCost(distanceUltime, current);
+                            currentFound.durationTotal += distanceUltime / 0.83;
                             if (currentFound.costTotal < finalFound.costTotal)
                             {
                                 finalFound = currentFound;
@@ -220,10 +269,35 @@ namespace fletesProyect.orders
             //Guardamos la info
             entity.driverId = finalFound.driver.id;
             entity.originCoord = cordDriver;
-
+            _orderSvc.visits = finalFound.routes;
             return null;
         }
-        public double calculateCost(double distance, driverGasolineDto driver)
+
+        protected override async Task finallyPost(Orden entity, orderDtoCreation dtoCreation, object queryParams)
+        {
+            List<string> cords = new List<string>();
+            cords.Add(entity.originCoord);
+            foreach (Visit visit in _orderSvc.visits)
+            {
+                visit.orderId = entity.Id;
+                foreach (visitProduct visitProduct in visit.visitProducts)
+                {
+                    long productId = visitProduct.ordenDetailId;
+                    ordenDetail ordenDetail = entity.orderDetails.Where(od => od.productId == productId).FirstOrDefault();
+                    visitProduct.ordenDetailId = ordenDetail.Id;
+                    stationProduct stationProduct = _orderSvc.stationProducts.Where(sp => sp.productId == productId && sp.stationId == visit.stationId).FirstOrDefault();
+                    stationProduct.stock -= visitProduct.quantity;
+                }
+                Station station = _orderSvc.stations.Where(s => s.Id == visit.stationId).FirstOrDefault();
+                cords.Add(station.cord);
+                await context.visits.AddAsync(visit);
+            }
+            cords.Add(dtoCreation.deliveryCoord);
+            // _googleMapsSvc.calculateDistance(cords).Result.Routes.First().Legs.First().
+            await context.SaveChangesAsync();
+
+        }
+        private double calculateCost(double distance, driverGasolineDto driver)
         {
             double costGalGas = double.Parse(driver.modelGasoline.gasolineType.description);
             double consumeGalKm = driver.modelGasoline.gasolineLtsKm;

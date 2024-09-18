@@ -27,11 +27,18 @@ namespace fletesProyect.driver
         // Método para obtener la posición de un driver
         public string? GetDriverPosition(long driverId)
         {
-            if (DriverPositions.TryGetValue(driverId, out var position))
-            {
-                return position;
-            }
-            return null;
+            // if (DriverPositions.TryGetValue(driverId, out var position))
+            // {
+            //     return position;
+            // }
+            // return null;
+            List<string> positions = new List<string>();
+            positions.Add("16.906682, -89.940174");
+            positions.Add("16.915402, -89.955067");
+            positions.Add("16.930593, -89.931335");
+            positions.Add("16.919754, -89.926014");
+            positions.Add(null);
+            return positions[(int)driverId];
         }
 
         // Cuando un driver se desconecta, puedes remover su posición

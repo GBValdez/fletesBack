@@ -5,6 +5,7 @@ using AvionesBackNet.Models;
 using AvionesBackNet.users;
 using fletesProyect.driver;
 using fletesProyect.googleMaps;
+using fletesProyect.orders;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,7 @@ builder.Services.AddScoped<interceptorDb>();
 builder.Services.AddScoped<emailService>();
 builder.Services.AddScoped<userSvc>();
 builder.Services.AddScoped<googleMapsSvc>();
+builder.Services.AddScoped<orderSvc>();
 builder.Services.AddSignalR();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddDbContext<DBProyContext>((serviceProvider, options) =>

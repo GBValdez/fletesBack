@@ -8,6 +8,8 @@ using AvionesBackNet.utils.dto;
 using fletesProyect.googleMaps;
 using fletesProyect.models;
 using GoogleApi.Entities.Maps.Directions.Response;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using project.utils;
@@ -17,6 +19,8 @@ namespace fletesProyect.station
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
+
     public class stationController : controllerCommons<Station, stationDtoCreation, stationDto, object, object, long>
     {
         private googleMapsSvc _googleMapsSvc;

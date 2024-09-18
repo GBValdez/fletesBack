@@ -7,6 +7,8 @@ using AvionesBackNet.Models;
 using fletesProyect.driver.modelGasolineModule.dto;
 using fletesProyect.models;
 using fletesProyect.utils.dto;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using project.utils;
@@ -16,6 +18,7 @@ namespace fletesProyect.driver.modelGasolineModule
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
     public class modelGasolineController : controllerCommons<modelGasoline, modelGasolineDtoCreation, modelGasolineDto, idDto, object, long>
     {
         public modelGasolineController(DBProyContext context, IMapper mapper) : base(context, mapper)

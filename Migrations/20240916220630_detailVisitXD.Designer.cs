@@ -3,6 +3,7 @@ using System;
 using AvionesBackNet.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace fletesProyect.Migrations
 {
     [DbContext(typeof(DBProyContext))]
-    partial class DBProyContextModelSnapshot : ModelSnapshot
+    [Migration("20240916220630_detailVisitXD")]
+    partial class detailVisitXD
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -466,9 +469,6 @@ namespace fletesProyect.Migrations
                     b.Property<DateTime>("estimatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long>("orderId")
-                        .HasColumnType("bigint");
-
                     b.Property<DateTime?>("realDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -482,8 +482,6 @@ namespace fletesProyect.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("orderId");
 
                     b.HasIndex("stationId");
 
@@ -1266,12 +1264,6 @@ namespace fletesProyect.Migrations
 
             modelBuilder.Entity("fletesProyect.models.Visit", b =>
                 {
-                    b.HasOne("fletesProyect.models.Orden", "order")
-                        .WithMany()
-                        .HasForeignKey("orderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("fletesProyect.models.Station", "station")
                         .WithMany()
                         .HasForeignKey("stationId")
@@ -1281,8 +1273,6 @@ namespace fletesProyect.Migrations
                     b.HasOne("project.users.userEntity", "userUpdate")
                         .WithMany()
                         .HasForeignKey("userUpdateId");
-
-                    b.Navigation("order");
 
                     b.Navigation("station");
 

@@ -19,11 +19,27 @@ namespace project.utils.catalogues
         {
         }
 
-        // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
-        public override Task<ActionResult<resPag<catalogueDto>>> get([FromQuery] pagQueryDto data, [FromQuery] catalogueQueryDto queryParams)
+
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
+        public override Task<ActionResult<catalogueDto>> post(catalogueCreationDto newRegister, [FromQuery] object queryParams)
         {
-            return base.get(data, queryParams);
+            return base.post(newRegister, queryParams);
         }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
+        public override Task<ActionResult> put(catalogueCreationDto entityCurrent, [FromRoute] long id, [FromQuery] object queryParams)
+        {
+            return base.put(entityCurrent, id, queryParams);
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
+        public override Task<ActionResult> delete(long id)
+        {
+            return base.delete(id);
+        }
+
+
         protected override async Task<errorMessageDto> validPost(Catalogue entity, catalogueCreationDto dtoNew, object queryParams)
         {
             entity.catalogueTypeId = (await getCatalogueType()).Id;

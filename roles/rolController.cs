@@ -14,7 +14,7 @@ namespace project.roles
 {
     [ApiController]
     [Route("rol")]
-    // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
 
     public class rolController : controllerCommons<rolEntity, rolCreationDto, rolDto, rolQueryDto, object, string>
     {
@@ -26,12 +26,12 @@ namespace project.roles
             this.userManager = userManager;
         }
 
-        // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
 
         public override Task<ActionResult<resPag<rolDto>>> get([FromQuery] pagQueryDto data, [FromQuery] rolQueryDto queryParams)
         {
             return base.get(data, queryParams);
         }
+
 
         public override async Task<ActionResult<rolDto>> post(rolCreationDto newRegister, [FromQuery] object queryParams)
         {
@@ -42,6 +42,7 @@ namespace project.roles
             await rolManager.CreateAsync(newRol);
             return Ok();
         }
+
         public override async Task<ActionResult> put(rolCreationDto entityCurrent, [FromRoute] string id, [FromQuery] object queryCreation)
         {
             return BadRequest(new errorMessageDto("No se puede modificar el rol"));

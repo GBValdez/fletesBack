@@ -7,6 +7,8 @@ using AvionesBackNet.Models;
 using AvionesBackNet.users;
 using fletesProyect.driver.dto;
 using fletesProyect.models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +21,7 @@ namespace fletesProyect.driver
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
     public class DriverController : controllerCommons<Driver, driveDtoCreation, driverDto, object, object, long>
     {
         protected userSvc userSvc;

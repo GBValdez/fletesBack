@@ -30,6 +30,7 @@ public partial class DBProyContext : IdentityDbContext<userEntity, rolEntity, st
     public DbSet<Provider> providers { get; set; }
     public DbSet<Station> stations { get; set; }
     public DbSet<Visit> visits { get; set; }
+    public DbSet<visitProduct> visitProducts { get; set; }
 
     public DbSet<binnacleBody> BinnacleBodies { get; set; }
     public DbSet<binnacleHeader> BinnacleHeaders { get; set; }
