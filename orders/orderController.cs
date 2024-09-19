@@ -8,9 +8,11 @@ using AvionesBackNet.utils;
 using AvionesBackNet.utils.dto;
 using fletesProyect.driver;
 using fletesProyect.driver.dto;
+using fletesProyect.driver.visits.dto.extra;
 using fletesProyect.googleMaps;
 using fletesProyect.models;
 using fletesProyect.orders.dto;
+using fletesProyect.station;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -59,7 +61,7 @@ namespace fletesProyect.orders
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "userNormal")]
         [HttpPost("createOrder")]
-        public async Task<ActionResult> createOrder([FromBody] orderDtoCreation newRegister)
+        public async Task<ActionResult<resBestRoute>> createOrder([FromBody] orderDtoCreation newRegister)
         {
             Orden entity = mapper.Map<Orden>(newRegister);
             //Asignamos el id del cliente al que pertenece la orden
@@ -233,9 +235,16 @@ namespace fletesProyect.orders
             foundOrderDto finalFound = new foundOrderDto(newRegister.orderDetails, null);
             finalFound.costTotal = double.MaxValue;
             int index = -1;
+            // ! ---------------------------------------------
+            List<foundOrderDto> foundOrderDemos = new List<foundOrderDto>();
+            // ! ---------------------------------------------
             foreach (driverGasolineDto current in driverList)
             {
                 index++;
+                // ! ---------------------------------------------
+                foundOrderDto demo = new foundOrderDto(newRegister.orderDetails, current);
+                demo.costTotal = double.MaxValue;
+                // ! ---------------------------------------------
                 string cord = GetDriverPosition(index);
                 if (cord != null)
                 {
@@ -243,9 +252,7 @@ namespace fletesProyect.orders
                     {
                         foundOrderDto foundOrder = new foundOrderDto(newRegister.orderDetails, current);
                         // Verificar costo de la posicion del conductor a la primera estacion
-                        double distanceC = googleMapsSvc.Harvesine(cord, currentRI.station.cord);
-                        foundOrder.costTotal = calculateCost(distanceC, current);
-                        foundOrder.durationTotal = distanceC / 0.83;
+                        foundOrder = sumCost(cord, currentRI.station.cord, foundOrder, current);
                         foundOrderDto currentFound = found(foundOrder, null, currentRI, double.MaxValue);
                         if (currentFound != null)
                         {
@@ -254,16 +261,27 @@ namespace fletesProyect.orders
                                 continue;
                             }
                             //Verificar la distancia de la ultima estacion a la entrega
-                            double distanceUltime = googleMapsSvc.Harvesine(currentFound.ultimeCord, newRegister.deliveryCoord);
-                            currentFound.costTotal += calculateCost(distanceUltime, current);
-                            currentFound.durationTotal += distanceUltime / 0.83;
+                            currentFound = sumCost(currentFound.ultimeCord, newRegister.deliveryCoord, currentFound, current);
+
                             if (currentFound.costTotal < finalFound.costTotal)
                             {
                                 finalFound = currentFound;
                                 finalFound.originCoord = cord;
                             }
+
+                            // ! ---------------------------------------------
+                            if (currentFound.costTotal < demo.costTotal)
+                            {
+                                demo = currentFound;
+                                demo.originCoord = cord;
+                            }
+                            // ! ---------------------------------------------
                         }
                     }
+                    // ! ---------------------------------------------
+                    if (demo.ultimeCord != null)
+                        foundOrderDemos.Add(demo);
+                    // ! ---------------------------------------------
 
                 }
             }
@@ -300,7 +318,21 @@ namespace fletesProyect.orders
             // _googleMapsSvc.calculateDistance(cords).Result.Routes.First().Legs.First().
             await context.SaveChangesAsync();
 
-            return Ok();
+            resBestRoute res = new resBestRoute();
+            res.bestRoute = mapper.Map<foundOrderDemoDto>(finalFound);
+            res.routes = mapper.Map<List<foundOrderDemoDto>>(foundOrderDemos);
+            res.stations = mapper.Map<List<stationDto>>(stationsAvailable);
+
+            return res;
+        }
+
+        private foundOrderDto sumCost(string origin, string dest, foundOrderDto foundOrder, driverGasolineDto driver)
+        {
+            double distance = googleMapsSvc.Harvesine(origin, dest);
+            foundOrder.costTotal += calculateCost(distance, driver);
+            foundOrder.durationTotal += distance / 0.83;
+            return foundOrder;
+
         }
         private double calculateCost(double distance, driverGasolineDto driver)
         {

@@ -2,6 +2,8 @@ using AutoMapper;
 using AvionesBackNet.Models;
 using fletesProyect.driver.dto;
 using fletesProyect.driver.modelGasolineModule.dto;
+using fletesProyect.driver.visits.dto;
+using fletesProyect.driver.visits.dto.extra;
 using fletesProyect.models;
 using fletesProyect.orders.dto;
 using fletesProyect.products;
@@ -57,13 +59,17 @@ namespace project.utils.autoMapper
             CreateMap<modelGasoline, modelGasolineDto>();
             CreateMap<modelGasolineDtoCreation, modelGasoline>();
 
-            CreateMap<foundOrderDto, foundOrderDto>();
-
             CreateMap<Orden, orderDto>();
             CreateMap<orderDtoCreation, Orden>();
 
             CreateMap<ordenDetail, orderDetailDto>();
             CreateMap<orderDetaillDtoCreation, ordenDetail>();
+
+            CreateMap<Visit, visitDto>();
+            CreateMap<visitProduct, visitProductDto>();
+
+            CreateMap<foundOrderDto, foundOrderDemoDto>();
+            CreateMap<driverGasolineDto, driverGasolineDemoDto>();
         }
 
     }
