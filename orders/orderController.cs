@@ -12,6 +12,7 @@ using fletesProyect.driver.visits.dto.extra;
 using fletesProyect.googleMaps;
 using fletesProyect.models;
 using fletesProyect.orders.dto;
+using fletesProyect.products;
 using fletesProyect.station;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -299,7 +300,7 @@ namespace fletesProyect.orders
             await context.SaveChangesAsync();
             //Visitas
             List<string> cords = new List<string>();
-            cords.Add(entity.originCoord);
+
             foreach (Visit visit in finalFound.routes)
             {
                 visit.orderId = entity.Id;
@@ -308,11 +309,13 @@ namespace fletesProyect.orders
                     long productId = visitProduct.ordenDetailId;
                     ordenDetail ordenDetail = entity.orderDetails.Where(od => od.productId == productId).FirstOrDefault();
                     visitProduct.ordenDetailId = ordenDetail.Id;
+                    Station stationCurrent = stationsAvailable.Where(s => s.Id == visit.stationId).FirstOrDefault();
+                    visitProduct.price = productProviders.Where(pp => pp.productId == productId && pp.providerId == stationCurrent.providerId).FirstOrDefault().price;
+
+                    // Reducir el stock de la estación
                     stationProduct stationProduct = stationProducts.Where(sp => sp.productId == productId && sp.stationId == visit.stationId).FirstOrDefault();
                     stationProduct.stock -= visitProduct.quantity;
                 }
-                Station station = stationsAvailable.Where(s => s.Id == visit.stationId).FirstOrDefault();
-                cords.Add(station.cord);
                 await context.AddAsync(visit);
             }
             cords.Add(newRegister.deliveryCoord);

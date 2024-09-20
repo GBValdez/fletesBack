@@ -10,5 +10,6 @@ namespace fletesProyect.driver.visits.dto
     {
         public long Id { get; set; }
         public orderDetailDto ordenDetail { get; set; } = null!;
+        public double price { get; set; }
     }
 }

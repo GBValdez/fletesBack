@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 using project.utils;
@@ -13,5 +14,7 @@ namespace fletesProyect.models
         public long quantity { get; set; }
         public long visitId { get; set; }
         public Visit visit { get; set; } = null!;
+        [NotMapped]
+        public double price { get; set; }
     }
 }
