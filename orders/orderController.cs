@@ -132,6 +132,7 @@ namespace fletesProyect.orders
 
             List<Station> stationsAvailable = await context.stations
                 .Where(s => s.openingTime <= time && s.closingTime >= time && stationProductsIds.Contains(s.Id) && s.countryId == validZone.data)
+                .Include(s => s.provider)
                 .ToListAsync();
 
             if (driversAvailable.Count == 0)
@@ -177,8 +178,8 @@ namespace fletesProyect.orders
                 if (beforeRoute != null)
                 {
                     routeStation rCurrent = beforeRoute.routeStations.Where(rs => rs.stationBId == currentRouter.station.Id).FirstOrDefault();
-
-                    myFound.costTotal += calculateCost(rCurrent.distance, myFound.driver);
+                    double distance = rCurrent.distance / 1000;
+                    myFound.costTotal += calculateCost(distance, myFound.driver);
                     myFound.durationTotal += rCurrent.duration;
 
                 }
