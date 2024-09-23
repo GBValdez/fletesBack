@@ -67,10 +67,9 @@ namespace fletesProyect.orders
             Orden entity = mapper.Map<Orden>(newRegister);
             //Asignamos el id del cliente al que pertenece la orden
             string idClient = User.Claims.FirstOrDefault(c => c.Type == "clientId")?.Value;
+            // Validamos que el id del cliente no sea nulo
             if (idClient == null)
-            {
                 return BadRequest(new errorMessageDto("No se ha encontrado el id del cliente"));
-            }
             entity.clientId = long.Parse(idClient);
 
             //Buscamos a los vehiculos que tenga compatibilidad con los productos de la orden
@@ -82,6 +81,11 @@ namespace fletesProyect.orders
                 .Where(vp => productIds.Contains(vp.productId) && vp.deleteAt == null)
                 .ToListAsync(); // Ejecuta la consulta en la base de datos y carga los resultados en memoria
 
+            // Verificar si se encontraron vehículos compatibles
+            if (vehicleProducts.Count == 0)
+                return BadRequest(new errorMessageDto("Error 01, no se pudo encontrar una ruta para la orden"));
+
+
             // Agrupar por typeVehicleId y realizar el filtrado en memoria
             List<long> idTypeVehicle = vehicleProducts
                 .GroupBy(vp => vp.typeVehicleId) // Agrupar por tipo de vehículo
@@ -92,13 +96,25 @@ namespace fletesProyect.orders
                 .Select(g => g.Key)
                 .ToList(); // Obtener la lista de IDs de los tipos de vehículos compatibles
 
+            // Verificar si se encontraron tipos de vehículos compatibles
+            if (idTypeVehicle.Count == 0)
+                return BadRequest(new errorMessageDto("Error 02, no se pudo encontrar una ruta para la orden"));
+
             List<product> products = await context.Products
                 .Where(p => productIds.Contains(p.Id) && p.deleteAt == null).ToListAsync();
+
+            // Verificar si se encontraron productos
+            if (products.Count == 0)
+                return BadRequest(new errorMessageDto("Error 03, no se pudo encontrar una ruta para la orden"));
 
             double TOTAL_WEIGHT = products.Sum(p => p.weight);
 
             List<modelGasoline> modelGasolines = await context.modelGasolines
                 .Where(mg => idTypeVehicle.Contains(mg.typeVehicleId) && mg.maximumWeight > TOTAL_WEIGHT && mg.deleteAt == null).Include(md => md.gasolineType).ToListAsync();
+
+            // Verificar si se encontraron modelos de vehículos compatibles
+            if (modelGasolines.Count == 0)
+                return BadRequest(new errorMessageDto("Error 04, no se pudo encontrar una ruta para la orden"));
             List<long> modelGasolineIds = modelGasolines.Select(mg => mg.modelId).ToList();
             TimeSpan time = DateTime.Now.TimeOfDay;
 
@@ -107,43 +123,56 @@ namespace fletesProyect.orders
             List<productProvider> productProviders = await context.productProviders
                 .Where(pp => productIds.Contains(pp.productId) && pp.deleteAt == null).ToListAsync();
 
+            // Verificar si se encontraron proveedores
+            if (productProviders.Count == 0)
+                return BadRequest(new errorMessageDto("Error 05, no se pudo encontrar una ruta para la orden"));
+
             List<long> providerIds = productProviders.Select(pp => pp.providerId).Distinct().ToList();
+
             //Estaciones disponibles
             List<stationProduct> stationProducts = await context.stationProducts
                 .Where(sp => productIds.
                     Contains(sp.productId) && sp.stock > 0 && providerIds.Contains(sp.station.providerId) && sp.deleteAt == null
                     )
                 .Include(st => st.station).ToListAsync();
+
+            // Verificar si se encontraron estaciones
+            if (stationProducts.Count == 0)
+                return BadRequest(new errorMessageDto("Error 06, no se pudo encontrar una ruta para la orden"));
+
             List<long> stationProductsIds = stationProducts.Select(sp => sp.stationId).Distinct().ToList();
 
             double lat = double.Parse(newRegister.deliveryCoord.Split(',')[0]);
             double lng = double.Parse(newRegister.deliveryCoord.Split(',')[1]);
             errClass<long> validZone = await _googleMapsSvc.validCountry(lat, lng);
             if (validZone.error != null)
-            {
                 return BadRequest(validZone.error);
-            }
 
             List<long> listOrdersDriverId = await context.Orders
                 .Where(o => o.deliveryDate == null && o.deleteAt == null).Select(o => o.driverId).Distinct().ToListAsync();
 
-            List<Driver> driversAvailable = await context.Drivers
-                .Where(d => d.openingTime <= time && d.closingTime >= time && modelGasolineIds.Contains(d.modelId) && d.countryOptId == validZone.data && !listOrdersDriverId.Contains(d.Id))
-                .ToListAsync();
+            IQueryable<Driver> queryDriverAvailable = context.Drivers
+                .Where(d => d.openingTime <= time && d.closingTime >= time && modelGasolineIds.Contains(d.modelId) && d.countryOptId == validZone.data)
+            ;
+            if (listOrdersDriverId.Count > 0)
+                queryDriverAvailable = queryDriverAvailable.Where(d => !listOrdersDriverId.Contains(d.Id));
+
+            List<Driver> driversAvailable = await queryDriverAvailable.ToListAsync();
+
+            // Verificar si se encontraron conductores
+            if (driversAvailable.Count == 0)
+            {
+                return BadRequest(new errorMessageDto("No hay conductores disponibles en la zona"));
+            }
 
             List<Station> stationsAvailable = await context.stations
                 .Where(s => s.openingTime <= time && s.closingTime >= time && stationProductsIds.Contains(s.Id) && s.countryId == validZone.data)
                 .Include(s => s.provider)
                 .ToListAsync();
 
-            if (driversAvailable.Count == 0)
-            {
-                return BadRequest(new errorMessageDto("No hay conductores disponibles en la zona"));
-            }
+
             if (stationsAvailable.Count == 0)
-            {
                 return BadRequest(new errorMessageDto("No hay estaciones disponibles con los productos solicitados en la zona"));
-            }
 
             List<long> idStations = stationsAvailable.Select(s => s.Id).ToList();
             List<routeStation> routeStations = await context.routeStations

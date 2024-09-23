@@ -7,6 +7,7 @@ using AvionesBackNet.Models;
 using AvionesBackNet.utils.dto;
 using fletesProyect.googleMaps;
 using fletesProyect.models;
+using fletesProyect.utils.dto;
 using GoogleApi.Entities.Maps.Directions.Response;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -21,12 +22,21 @@ namespace fletesProyect.station
     [Route("[controller]")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ADMINISTRATOR")]
 
-    public class stationController : controllerCommons<Station, stationDtoCreation, stationDto, object, object, long>
+    public class stationController : controllerCommons<Station, stationDtoCreation, stationDto, idDto, object, long>
     {
         private googleMapsSvc _googleMapsSvc;
         public stationController(DBProyContext context, IMapper mapper, googleMapsSvc googleMapsSvc) : base(context, mapper)
         {
             _googleMapsSvc = googleMapsSvc;
+        }
+
+        protected override Task<IQueryable<Station>> modifyGet(IQueryable<Station> query, idDto queryParams)
+        {
+            if (queryParams.Id != null)
+            {
+                query = query.Where(s => s.providerId == queryParams.Id);
+            }
+            return base.modifyGet(query, queryParams);
         }
         protected override async Task<errorMessageDto> validPost(Station entity, stationDtoCreation newRegister, object queryParams)
         {
