@@ -38,6 +38,7 @@ namespace fletesProyect.catalogues
             modelGasolineNew.gasolineLtsKm = 0;
             modelGasolineNew.gasolineTypeId = 12;
             modelGasolineNew.modelId = entity.Id;
+            modelGasolineNew.typeVehicleId = 2;
             context.Add(modelGasolineNew);
             await context.SaveChangesAsync();
 

@@ -42,9 +42,23 @@ namespace project.utils.catalogues
 
         protected override async Task<errorMessageDto> validPost(Catalogue entity, catalogueCreationDto dtoNew, object queryParams)
         {
+            errorMessageDto error = await validCataloguePost(entity, dtoNew, queryParams);
+            if (error != null)
+                return error;
+
             entity.catalogueTypeId = (await getCatalogueType()).Id;
             return null;
         }
+
+        protected override async Task<errorMessageDto> validPut(catalogueCreationDto dtoNew, Catalogue entity, object queryParams)
+        {
+            errorMessageDto error = await validCataloguePut(entity, dtoNew, queryParams);
+            if (error != null)
+                return error;
+
+            return null;
+        }
+
 
         protected Task<catalogueType> getCatalogueType()
         {
@@ -63,5 +77,17 @@ namespace project.utils.catalogues
 
             return query.Where(db => db.catalogueTypeId == catalogueType.Id).Include(db => db.catalogueParent);
         }
+
+        // Funciones modificables 
+        protected async virtual Task<errorMessageDto> validCataloguePost(Catalogue entity, catalogueCreationDto dtoNew, object queryParams)
+        {
+            return null;
+        }
+
+        protected async virtual Task<errorMessageDto> validCataloguePut(Catalogue entity, catalogueCreationDto dtoNew, object queryParams)
+        {
+            return null;
+        }
+
     }
 }

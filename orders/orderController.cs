@@ -140,6 +140,16 @@ namespace fletesProyect.orders
             if (stationProducts.Count == 0)
                 return BadRequest(new errorMessageDto("Error 06, no se pudo encontrar una ruta para la orden"));
 
+            // ! ---------------------------------------------
+            foreach (orderDetaillDtoCreation currentDetail in newRegister.orderDetails)
+            {
+                List<stationProduct> stationProduct = stationProducts.Where(sp => sp.productId == currentDetail.productId).ToList();
+                long quantity = stationProduct.Sum(sp => sp.stock);
+                if (quantity < currentDetail.quantity)
+                    return BadRequest(new errorMessageDto("Error 07, no se pudo encontrar una ruta para la orden"));
+            }
+            // ! ---------------------------------------------
+
             List<long> stationProductsIds = stationProducts.Select(sp => sp.stationId).Distinct().ToList();
 
             double lat = double.Parse(newRegister.deliveryCoord.Split(',')[0]);

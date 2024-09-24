@@ -14,6 +14,7 @@ namespace fletesProyect.driver.visits.dto
         public stationDto station { get; set; } = null!;
         public List<visitProductDto> visitProducts { get; set; } = new List<visitProductDto>();
         public orderDto order { get; set; } = null!;
+        public long stationId { get; set; }
 
 
     }
