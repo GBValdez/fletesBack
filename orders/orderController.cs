@@ -391,10 +391,11 @@ namespace fletesProyect.orders
             // }
             // return null;
             List<string> positions = new List<string>();
-            positions.Add("16.906682, -89.940174");
-            positions.Add("16.915402, -89.955067");
-            positions.Add("16.930593, -89.931335");
-            positions.Add("16.919754, -89.926014");
+            // 14.599235779184474, -90.50869561234872
+            positions.Add("14.599235779184474, -90.50869561234872");
+            positions.Add("14.599235779184474, -90.50869561234872");
+            positions.Add("14.599235779184474, -90.50869561234872");
+            positions.Add("14.599235779184474, -90.50869561234872");
             positions.Add(null);
             return positions[(int)driverId];
         }
